@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+:root {
+  --wiki-bg: #f8f9fa;
+  --wiki-surface: #ffffff;
+  --wiki-border: #a2a9b1;
+  --wiki-border-light: #eaecf0;
+  --wiki-text: #202122;
+  --wiki-text-muted: #54595d;
+  --wiki-link: #3366cc;
+  --wiki-link-visited: #6b4ba1;
+  --wiki-link-hover: #447ff5;
+  --wiki-accent: #36c;
+  --wiki-sidebar-bg: #f8f9fa;
+  --wiki-infobox-bg: #f8f9fa;
+  --wiki-toc-bg: #f8f9fa;
+  --wiki-header-bg: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, "Linux Libertine", Georgia, Times, serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--wiki-text);
+  background: var(--wiki-bg);
+  margin: 0;
+}
+
+/* Wikipedia-style article prose */
+.wiki-content h1 {
+  font-family: "Linux Libertine", Georgia, Times, serif;
+  font-size: 1.95em;
+  font-weight: normal;
+  border-bottom: 1px solid var(--wiki-border);
+  padding-bottom: 3px;
+  margin-bottom: 0.5em;
+  color: #000;
+}
+
+.wiki-content h2 {
+  font-family: "Linux Libertine", Georgia, Times, serif;
+  font-size: 1.5em;
+  font-weight: normal;
+  border-bottom: 1px solid var(--wiki-border-light);
+  padding-bottom: 3px;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.wiki-content h3 {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-top: 1.2em;
+  margin-bottom: 0.4em;
+}
+
+.wiki-content h4 {
+  font-size: 1em;
+  font-weight: bold;
+  margin-top: 1em;
+}
+
+.wiki-content p {
+  margin-top: 0;
+  margin-bottom: 0.8em;
+}
+
+.wiki-content a {
+  color: var(--wiki-link);
+  text-decoration: none;
+}
+
+.wiki-content a:hover {
+  text-decoration: underline;
+}
+
+.wiki-content a:visited {
+  color: var(--wiki-link-visited);
+}
+
+.wiki-content ul,
+.wiki-content ol {
+  margin: 0.4em 0 0.8em 1.6em;
+  padding: 0;
+}
+
+.wiki-content li {
+  margin-bottom: 0.2em;
+}
+
+.wiki-content blockquote {
+  border-left: 3px solid var(--wiki-border);
+  margin: 1em 0 1em 2em;
+  padding: 0.2em 1em;
+  color: var(--wiki-text-muted);
+  font-style: italic;
+}
+
+.wiki-content table {
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+
+.wiki-content table th,
+.wiki-content table td {
+  border: 1px solid var(--wiki-border);
+  padding: 0.4em 0.8em;
+  text-align: left;
+}
+
+.wiki-content table th {
+  background: var(--wiki-infobox-bg);
+  font-weight: bold;
+}
+
+.wiki-content code {
+  font-family: "DejaVu Sans Mono", Consolas, monospace;
+  font-size: 0.9em;
+  background: #f0f0f0;
+  padding: 0.1em 0.3em;
+  border-radius: 2px;
+}
+
+.wiki-content pre {
+  background: #f8f8f8;
+  border: 1px solid var(--wiki-border-light);
+  padding: 1em;
+  overflow-x: auto;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.wiki-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.wiki-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.wiki-content hr {
+  border: none;
+  border-top: 1px solid var(--wiki-border-light);
+  margin: 1.5em 0;
+}
+
+/* Wikilink styling */
+.wiki-link {
+  color: var(--wiki-link);
+  text-decoration: none;
+}
+
+.wiki-link:hover {
+  text-decoration: underline;
+}
+
+.wiki-link-missing {
+  color: #cc2200;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--wiki-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--wiki-border);
+  border-radius: 3px;
+}

@@ -1,0 +1,7 @@
+{
+  "_meta": {
+    "description": "Reverse link index. Maps article titles to the list of articles that link to them.",
+    "last_rebuilt": null,
+    "total_links": 0
+  }
+}

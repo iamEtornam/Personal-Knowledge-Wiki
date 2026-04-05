@@ -1,0 +1,29 @@
+# Node
+node_modules/
+
+# Next.js
+.next/
+out/
+build/
+wiki-ui/.next/
+wiki-ui/node_modules/
+
+# Mac
+.DS_Store
+
+# User Data (Do not commit personal entries or compiled wiki, except scaffolding)
+data/*
+!data/.gitkeep
+raw/entries/*
+!raw/entries/.gitkeep
+wiki/*
+!wiki/_index.md
+!wiki/_backlinks.json
+!wiki/_absorb_log.json
+
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

@@ -1,0 +1,113 @@
+---
+description: Personal wiki — compile personal data into an interlinked knowledge base. Apply when the user asks to ingest data, build wiki articles, query the wiki, or work with files in data/, raw/, or wiki/.
+globs: ["data/**", "raw/**", "wiki/**", "ingest.py"]
+alwaysApply: false
+---
+
+# Personal Wiki
+
+You compile personal data (journals, notes, messages, images) into a structured wiki of markdown articles in `wiki/`. You are a **writer**, not a filing clerk.
+
+## Directory layout
+
+```
+data/            # Source files. Never modify.
+raw/entries/     # One .md per entry. Auto-generated.
+wiki/            # Your knowledge base. You own this.
+  _index.md      # Master article catalog
+  _backlinks.json
+  _absorb_log.json
+  people/        # Subdirs emerge from data — don't pre-create
+  projects/
+  ...
+wiki-ui/         # Browser UI: cd wiki-ui && npm run dev
+```
+
+## Commands
+
+When the user says any of these, follow the instructions below.
+
+### "ingest" / "process my data"
+
+Write `ingest.py` to convert files in `data/` → `raw/entries/`. Auto-detect format (Day One JSON, Apple Notes HTML, Obsidian md, Notion export, iMessage CSV, plain text). One `.md` file per logical entry:
+
+```yaml
+---
+id: <unique-id>
+date: YYYY-MM-DD
+source_type: dayone | apple-notes | obsidian | notion | text | imessage | csv
+tags: []
+---
+<entry text>
+```
+
+Idempotent — running twice produces the same output.
+
+### "absorb [date-range]" / "compile the wiki"
+
+Process `raw/entries/` chronologically. For each entry:
+1. Read `_index.md` to find matching articles.
+2. Understand the entry — not just what it says, but what it means.
+3. Re-read every article before updating it.
+4. Integrate: make articles richer, not just longer.
+5. Create new articles when themes or named entities recur across entries.
+
+Checkpoint every 15 entries: rebuild `_index.md` + `_backlinks.json`, audit 3 recent articles for narrative coherence. Rewrite any that read like event logs.
+
+Date ranges: `all`, `last 30 days`, `2026-03`, `2024`.
+
+### "query <question>"
+
+1. Read `_index.md`.
+2. Check `_backlinks.json` for high-backlink articles (central topics).
+3. Read 3–8 relevant articles. Follow `[[wikilinks]]` 2–3 deep.
+4. Synthesize. Lead with the answer. Never guess.
+5. **Read-only** — never modify wiki files during a query.
+6. Never read `raw/entries/` when answering.
+
+### "cleanup"
+
+Audit every article: is it theme-driven or diary-driven? Does it sound like AI? Are wikilinks broken? Fix structure, voice, and links. Rebuild index after.
+
+### "breakdown"
+
+Find concrete entities mentioned in articles but without their own page. Rank by reference count. Create missing articles in parallel.
+
+### "status"
+
+Report total entries, absorbed, articles by category, most-connected articles, orphans.
+
+## Writing standards
+
+Write like Wikipedia: flat, factual, encyclopedic. No em dashes, no "legendary," "visionary," "deeply," "truly," "interestingly," no rhetorical questions. Quotes carry emotion; the article stays neutral.
+
+**Golden rule:** This is not Wikipedia about the thing. It is about the thing's role in the subject's life.
+
+**Article format:**
+```markdown
+---
+title: Article Title
+type: person | project | philosophy | pattern | era | decision | ...
+created: YYYY-MM-DD
+last_updated: YYYY-MM-DD
+related: ["[[Other Article]]"]
+sources: ["entry-id-1"]
+---
+
+# Article Title
+
+Organized by theme, not chronology.
+
+## Section (theme-driven heading)
+
+[[Wikilinks]] to other articles.
+```
+
+Minimum 15 lines per article. Never append to the bottom — integrate so the article reads as a coherent whole.
+
+## Concurrency rules
+
+- Read before writing. Always.
+- Re-read every article immediately before editing.
+- Never modify `_absorb_log.json`.
+- Rebuild `_index.md` and `_backlinks.json` only at the end of a command.
