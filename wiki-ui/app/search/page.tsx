@@ -3,45 +3,36 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Search } from "lucide-react";
 
 interface SearchResult {
-  slug: string;
-  title: string;
-  directory: string;
-  wordCount: number;
-  excerpt: string;
+  slug: string; title: string; directory: string; wordCount: number; excerpt: string;
 }
 
 function SearchContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const initialQ = searchParams.get("q") || "";
-  const [query, setQuery] = useState(initialQ);
+  const router       = useRouter();
+  const initialQ     = searchParams.get("q") || "";
+  const [query, setQuery]   = useState(initialQ);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  useEffect(() => {
-    if (initialQ) {
-      doSearch(initialQ);
-    }
-  }, [initialQ]);
+  useEffect(() => { if (initialQ) doSearch(initialQ); }, [initialQ]);
 
   async function doSearch(q: string) {
     if (!q.trim()) return;
     setLoading(true);
     setSearched(true);
     try {
-      const res = await fetch(
-        `/api/wiki/search?q=${encodeURIComponent(q.trim())}`
-      );
+      const res  = await fetch(`/api/wiki/search?q=${encodeURIComponent(q.trim())}`);
       const data = await res.json();
       setResults(data.results || []);
-    } catch {
-      setResults([]);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setResults([]); }
+    finally { setLoading(false); }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -51,125 +42,83 @@ function SearchContent() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 32px" }}>
-      <h1
-        style={{
-          fontFamily: "Georgia, serif",
-          fontWeight: "normal",
-          fontSize: 26,
-          borderBottom: "1px solid #a2a9b1",
-          paddingBottom: 6,
-          marginBottom: 20,
-        }}
-      >
-        Search
-      </h1>
+    <div className="max-w-3xl mx-auto px-6 py-6">
+      <h1 className="text-2xl font-serif font-normal text-gray-900 border-b border-gray-200 pb-3 mb-5">Search</h1>
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
+      <form onSubmit={handleSubmit} className="flex gap-2 mb-7">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <Input
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search articles..."
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search your wiki…"
             autoFocus
-            style={{
-              flex: 1,
-              padding: "8px 12px",
-              border: "1px solid #a2a9b1",
-              borderRadius: 2,
-              fontSize: 15,
-              outline: "none",
-            }}
+            className="pl-9 text-base border-gray-200 focus:border-blue-400"
           />
-          <button
-            type="submit"
-            style={{
-              padding: "8px 20px",
-              background: "#36c",
-              color: "#fff",
-              border: "none",
-              borderRadius: 2,
-              cursor: "pointer",
-              fontSize: 14,
-            }}
-          >
-            Search
-          </button>
         </div>
+        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6">Search</Button>
       </form>
 
       {loading && (
-        <div style={{ color: "#54595d", fontSize: 14 }}>Searching...</div>
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+          Searching…
+        </div>
       )}
 
       {!loading && searched && (
         <div>
-          <div style={{ color: "#54595d", fontSize: 13, marginBottom: 16 }}>
+          <p className="text-sm text-gray-400 mb-4">
             {results.length === 0
               ? `No results for "${initialQ}"`
               : `${results.length} result${results.length !== 1 ? "s" : ""} for "${initialQ}"`}
-          </div>
+          </p>
 
-          {results.map((r) => (
-            <div
-              key={r.slug}
-              style={{
-                borderBottom: "1px solid #eaecf0",
-                padding: "14px 0",
-              }}
-            >
-              <Link
-                href={`/wiki/${r.slug}`}
-                style={{
-                  display: "block",
-                  color: "#3366cc",
-                  textDecoration: "none",
-                  fontSize: 18,
-                  fontFamily: "Georgia, serif",
-                  marginBottom: 4,
-                }}
-              >
-                {r.title}
-              </Link>
-              <div
-                style={{ color: "#54595d", fontSize: 12, marginBottom: 6 }}
-              >
-                {r.directory && (
-                  <>
-                    <Link
-                      href={`/category/${r.directory}`}
-                      style={{ color: "#3366cc", textDecoration: "none" }}
-                    >
+          <div className="divide-y divide-gray-100">
+            {results.map(r => (
+              <div key={r.slug} className="py-4">
+                <Link
+                  href={`/wiki/${r.slug}`}
+                  className="text-xl font-serif font-normal text-blue-700 hover:underline block mb-1"
+                >
+                  {r.title}
+                </Link>
+                <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+                  {r.directory && (
+                    <Badge variant="outline" className="text-[10px] capitalize border-gray-200 text-gray-500 py-0">
                       {r.directory}
-                    </Link>
-                    {" · "}
-                  </>
+                    </Badge>
+                  )}
+                  <span>{r.wordCount.toLocaleString()} words</span>
+                </div>
+                {r.excerpt && (
+                  <p
+                    className="text-sm text-gray-600 leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: r.excerpt }}
+                  />
                 )}
-                {r.wordCount.toLocaleString()} words
               </div>
-              {r.excerpt && (
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: 13,
-                    color: "#202122",
-                    lineHeight: 1.5,
-                  }}
-                  dangerouslySetInnerHTML={{ __html: r.excerpt }}
-                />
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
+
+      {!searched && (
+        <div className="text-center py-16 text-gray-300">
+          <Search className="w-12 h-12 mx-auto mb-3" />
+          <p className="text-sm">Type something to search across all articles</p>
+        </div>
+      )}
+
+      <style>{`mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }`}</style>
     </div>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 32 }}>Loading...</div>}>
+    <Suspense fallback={<div className="p-8 text-gray-400 text-sm">Loading…</div>}>
       <SearchContent />
     </Suspense>
   );

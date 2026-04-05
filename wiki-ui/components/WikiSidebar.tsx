@@ -3,217 +3,143 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Search, BookOpen, LayoutGrid, AlignLeft, BarChart2, GitBranch, Home } from "lucide-react";
 
-interface Directory {
-  name: string;
-  count: number;
+interface Directory { name: string; count: number }
+interface WikiSidebarProps { directories: Directory[]; totalArticles: number }
+
+const DIR_COLORS: Record<string, string> = {
+  people:      "bg-blue-100 text-blue-700 border-blue-200",
+  projects:    "bg-orange-100 text-orange-700 border-orange-200",
+  philosophies:"bg-purple-100 text-purple-700 border-purple-200",
+  patterns:    "bg-green-100 text-green-700 border-green-200",
+  places:      "bg-rose-100 text-rose-700 border-rose-200",
+  films:       "bg-pink-100 text-pink-700 border-pink-200",
+  books:       "bg-amber-100 text-amber-700 border-amber-200",
+  music:       "bg-teal-100 text-teal-700 border-teal-200",
+  eras:        "bg-slate-100 text-slate-700 border-slate-200",
+  decisions:   "bg-yellow-100 text-yellow-700 border-yellow-200",
+  ideas:       "bg-cyan-100 text-cyan-700 border-cyan-200",
+  tools:       "bg-indigo-100 text-indigo-700 border-indigo-200",
+};
+
+function getDirColor(name: string) {
+  return DIR_COLORS[name] ?? "bg-gray-100 text-gray-600 border-gray-200";
 }
 
-interface WikiSidebarProps {
-  directories: Directory[];
-  totalArticles: number;
-}
-
-export default function WikiSidebar({
-  directories,
-  totalArticles,
-}: WikiSidebarProps) {
+export default function WikiSidebar({ directories, totalArticles }: WikiSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
-    }
+    if (query.trim()) router.push(`/search?q=${encodeURIComponent(query.trim())}`);
   }
 
   return (
-    <aside
-      style={{
-        width: 200,
-        minWidth: 200,
-        borderRight: "1px solid #a2a9b1",
-        background: "#f8f9fa",
-        padding: "12px 0",
-        fontSize: 13,
-        height: "100vh",
-        position: "sticky",
-        top: 0,
-        overflowY: "auto",
-        flexShrink: 0,
-      }}
-    >
+    <aside className="w-[220px] min-w-[220px] flex-shrink-0 border-r border-gray-200 bg-[#f8fafc] flex flex-col h-screen sticky top-0">
+
       {/* Logo */}
-      <div style={{ padding: "0 12px 12px", borderBottom: "1px solid #eaecf0" }}>
-        <Link href="/" style={{ textDecoration: "none" }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 4,
-            }}
-          >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg, #36c 60%, #6b4ba1)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                fontWeight: "bold",
-                fontSize: 22,
-                fontFamily: "Georgia, serif",
-              }}
-            >
-              W
-            </div>
-            <span
-              style={{
-                color: "#000",
-                fontFamily: "Georgia, serif",
-                fontSize: 12,
-                fontWeight: "bold",
-                letterSpacing: 1,
-                textTransform: "uppercase",
-              }}
-            >
-              Personal Wiki
-            </span>
-            <span style={{ color: "#54595d", fontSize: 11 }}>
-              {totalArticles} articles
-            </span>
+      <div className="px-4 py-5 border-b border-gray-200">
+        <Link href="/" className="flex flex-col items-center gap-2 no-underline group">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-2xl font-bold font-serif shadow-md"
+            style={{ background: "linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)" }}>
+            W
+          </div>
+          <div className="text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-800 leading-none">Personal Wiki</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{totalArticles} articles</p>
           </div>
         </Link>
       </div>
 
       {/* Search */}
-      <div style={{ padding: "10px 12px", borderBottom: "1px solid #eaecf0" }}>
-        <form onSubmit={handleSearch}>
-          <input
+      <div className="px-3 py-3 border-b border-gray-200">
+        <form onSubmit={handleSearch} className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+          <Input
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search wiki..."
-            style={{
-              width: "100%",
-              padding: "5px 8px",
-              border: "1px solid #a2a9b1",
-              borderRadius: 2,
-              fontSize: 13,
-              background: "#fff",
-              color: "#202122",
-              outline: "none",
-            }}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Search wiki…"
+            className="pl-8 h-8 text-xs bg-white border-gray-200 focus:border-blue-400 focus:ring-blue-100"
           />
         </form>
       </div>
 
-      {/* Navigation */}
-      <div style={{ padding: "8px 0" }}>
-        <SidebarSection title="Navigation">
-          <SidebarLink href="/" label="Main Page" active={pathname === "/"} />
-          <SidebarLink
-            href="/all"
-            label="All Articles"
-            active={pathname === "/all"}
-          />
-          <SidebarLink
-            href="/search"
-            label="Search"
-            active={pathname.startsWith("/search")}
-          />
-        </SidebarSection>
+      <ScrollArea className="flex-1">
+        <div className="py-2">
 
-        {directories.length > 0 && (
-          <SidebarSection title="Categories">
-            {directories.map((d) => (
-              <SidebarLink
-                key={d.name}
-                href={`/category/${d.name}`}
-                label={`${capitalize(d.name)} (${d.count})`}
-                active={pathname === `/category/${d.name}`}
-              />
-            ))}
+          {/* Navigation */}
+          <SidebarSection title="Navigation">
+            <NavLink href="/"         label="Main Page"    icon={<Home className="w-3.5 h-3.5" />}     active={pathname === "/"} />
+            <NavLink href="/all"      label="All Articles" icon={<AlignLeft className="w-3.5 h-3.5" />} active={pathname === "/all"} />
+            <NavLink href="/graph"    label="Graph View"   icon={<GitBranch className="w-3.5 h-3.5" />} active={pathname === "/graph"} />
+            <NavLink href="/stats"    label="Stats"        icon={<BarChart2 className="w-3.5 h-3.5" />} active={pathname === "/stats"} />
           </SidebarSection>
-        )}
 
-        <SidebarSection title="Tools">
-          <SidebarLink
-            href="/graph"
-            label="Graph View"
-            active={pathname === "/graph"}
-          />
-          <SidebarLink
-            href="/stats"
-            label="Stats"
-            active={pathname === "/stats"}
-          />
-        </SidebarSection>
+          {directories.length > 0 && (
+            <>
+              <Separator className="my-1 mx-3" />
+              <SidebarSection title="Categories">
+                {directories.map(d => (
+                  <Link
+                    key={d.name}
+                    href={`/category/${d.name}`}
+                    className={`flex items-center justify-between px-3 py-1.5 rounded-md mx-2 mb-0.5 no-underline transition-colors ${
+                      pathname === `/category/${d.name}`
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    <span className="text-[12.5px] capitalize font-medium truncate">{d.name}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-semibold ml-1 shrink-0 ${getDirColor(d.name)}`}>
+                      {d.count}
+                    </span>
+                  </Link>
+                ))}
+              </SidebarSection>
+            </>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Footer */}
+      <div className="border-t border-gray-200 px-4 py-3">
+        <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+          Maintained by your AI agent
+        </p>
       </div>
     </aside>
   );
 }
 
-function SidebarSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 4 }}>
-      <div
-        style={{
-          padding: "6px 12px 2px",
-          fontSize: 11,
-          fontWeight: "bold",
-          color: "#54595d",
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-        }}
-      >
-        {title}
-      </div>
+    <div className="mb-1">
+      <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">{title}</p>
       {children}
     </div>
   );
 }
 
-function SidebarLink({
-  href,
-  label,
-  active,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-}) {
+function NavLink({ href, label, icon, active }: { href: string; label: string; icon: React.ReactNode; active: boolean }) {
   return (
     <Link
       href={href}
-      style={{
-        display: "block",
-        padding: "3px 12px 3px 16px",
-        color: active ? "#000" : "#3366cc",
-        background: active ? "#eaf3fb" : "transparent",
-        textDecoration: "none",
-        fontSize: 13,
-        borderLeft: active ? "3px solid #36c" : "3px solid transparent",
-        fontWeight: active ? "bold" : "normal",
-      }}
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-md mx-2 mb-0.5 no-underline text-[12.5px] font-medium transition-colors ${
+        active
+          ? "bg-blue-600 text-white shadow-sm"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+      }`}
     >
+      {icon}
       {label}
     </Link>
   );
-}
-
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
