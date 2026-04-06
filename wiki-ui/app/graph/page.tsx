@@ -1,7 +1,7 @@
 import { getAllArticles, getBacklinks } from "@/lib/wiki";
 import GraphView from "./GraphView";
 
-export const metadata = { title: "Graph View — Personal Wiki" };
+export const metadata = { title: "Graph View | Personal Wiki" };
 
 export default function GraphPage() {
   const articles = getAllArticles();

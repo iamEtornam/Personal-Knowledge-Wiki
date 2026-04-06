@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { getDirectories, getAllArticles } from "@/lib/wiki";
 import WikiSidebar from "@/components/WikiSidebar";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "Personal Wiki",
@@ -17,7 +21,7 @@ export default function RootLayout({
   const allArticles = getAllArticles();
 
   return (
-    <html lang="en">
+    <html lang="en" className={cn("font-sans", geist.variable)}>
       <body>
         <div style={{ display: "flex", minHeight: "100vh" }}>
           <WikiSidebar
