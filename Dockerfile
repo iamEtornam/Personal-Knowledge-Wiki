@@ -10,10 +10,11 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 
-COPY wiki/ wiki/
-COPY wiki-config.json* ./
-COPY wiki-ui/ wiki-ui/
+COPY . .
 COPY --from=deps /app/wiki-ui/node_modules wiki-ui/node_modules
+
+# Ensure wiki directory exists even for fresh deployments
+RUN mkdir -p wiki
 
 WORKDIR /app/wiki-ui
 RUN npm run build
@@ -29,7 +30,8 @@ ENV PORT=3000
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/wiki/ wiki/
+# Ensure wiki directory exists at runtime
+RUN mkdir -p wiki && chown nextjs:nodejs wiki
 COPY --from=builder /app/wiki-config.json* ./
 
 # Standalone output is flat — place it under wiki-ui/ so that

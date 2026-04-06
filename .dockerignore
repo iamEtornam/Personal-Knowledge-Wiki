@@ -10,3 +10,8 @@ data/
 *.pyc
 __pycache__
 agent-transcripts/
+*.md
+!wiki-ui/**/*.md
+!wiki/**/*.md
+ingest.py
+assets/
