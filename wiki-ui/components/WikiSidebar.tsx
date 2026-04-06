@@ -102,8 +102,8 @@ export default function WikiSidebar({
                     key={d.name}
                     href={`/category/${d.name}`}
                     className={`flex items-center justify-between px-3 py-1.5 rounded-md mx-2 mb-0.5 no-underline transition-colors ${pathname === `/category/${d.name}`
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                       }`}
                   >
                     <span className="text-[12.5px] capitalize font-medium truncate">{d.name}</span>
@@ -154,10 +154,10 @@ function NavLink({
     <Link
       href={href}
       className={`flex items-center gap-2 px-3 py-1.5 rounded-md mx-2 mb-0.5 no-underline text-[12.5px] font-medium transition-colors ${active
-          ? "bg-blue-600 text-white shadow-sm"
-          : highlight
-            ? "text-blue-600 hover:bg-blue-50 hover:text-blue-700 border border-blue-200 bg-blue-50/50"
-            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        ? "bg-blue-600 text-white shadow-sm"
+        : highlight
+          ? "text-blue-600 hover:bg-blue-50 hover:text-blue-700 border border-blue-200 bg-blue-50/50"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
         }`}
     >
       {icon}

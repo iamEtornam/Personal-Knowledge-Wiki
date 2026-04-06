@@ -1,0 +1,6 @@
+{
+  "ownerName": "Etornam",
+  "llmEnabled": false,
+  "llmModel": "llama3.2",
+  "llmOllamaUrl": "http://localhost:11434"
+}

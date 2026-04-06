@@ -1,8 +1,0 @@
-{
-  "_meta": {
-    "description": "Tracks which raw entries have been absorbed into the wiki. Do not modify manually.",
-    "last_run": null,
-    "total_absorbed": 0
-  },
-  "absorbed": []
-}

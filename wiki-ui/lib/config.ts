@@ -5,10 +5,16 @@ const CONFIG_PATH = path.join(process.cwd(), "..", "wiki-config.json");
 
 export interface WikiConfig {
   ownerName: string;
+  llmEnabled: boolean;
+  llmModel: string;
+  llmOllamaUrl: string;
 }
 
 const DEFAULT_CONFIG: WikiConfig = {
   ownerName: "",
+  llmEnabled: false,
+  llmModel: "llama3.2",
+  llmOllamaUrl: "http://localhost:11434",
 };
 
 export function getWikiConfig(): WikiConfig {

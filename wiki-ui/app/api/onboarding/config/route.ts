@@ -9,7 +9,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { ownerName } = body;
+    const { ownerName, llmEnabled, llmModel, llmOllamaUrl } = body;
 
     if (!ownerName || typeof ownerName !== "string" || !ownerName.trim()) {
       return NextResponse.json(
@@ -18,7 +18,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const config = saveWikiConfig({ ownerName: ownerName.trim() });
+    const update: Parameters<typeof saveWikiConfig>[0] = {
+      ownerName: ownerName.trim(),
+    };
+    if (typeof llmEnabled === "boolean") update.llmEnabled = llmEnabled;
+    if (typeof llmModel === "string" && llmModel.trim()) update.llmModel = llmModel.trim();
+    if (typeof llmOllamaUrl === "string" && llmOllamaUrl.trim()) update.llmOllamaUrl = llmOllamaUrl.trim();
+
+    const config = saveWikiConfig(update);
     return NextResponse.json(config);
   } catch {
     return NextResponse.json(

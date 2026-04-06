@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  Bot,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -14,12 +15,16 @@ import {
   Network,
   Search,
   Sparkles,
+  Trash2,
   Upload,
+  Wifi,
+  WifiOff,
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   useCallback,
+  useEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -43,6 +48,14 @@ type SourceId =
   | 'files';
 
 type ProcessingPhase = 'idle' | 'uploading' | 'ingesting' | 'done' | 'error';
+
+type OllamaStatus = 'idle' | 'checking' | 'ok' | 'error';
+
+interface LlmConfig {
+  enabled: boolean;
+  model: string;
+  ollamaUrl: string;
+}
 
 interface DataSource {
   id: SourceId;
@@ -227,12 +240,56 @@ export default function OnboardingWizard() {
   const [uploadCount, setUploadCount] = useState(0);
   const [ingestRan, setIngestRan] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+  // True once we know the config has loaded; prevents a flash of step 0.
+  const [configLoaded, setConfigLoaded] = useState(false);
+  // True when the user already has a name set (returning user adding more data).
+  const [isReturningUser, setIsReturningUser] = useState(false);
+  const [llm, setLlm] = useState<LlmConfig>({
+    enabled: false,
+    model: 'llama3.2',
+    ollamaUrl: 'http://localhost:11434',
+  });
+
+  // On mount, check whether the wiki is already configured.
+  // If so, jump straight to the upload step with all sources pre-selected.
+  useEffect(() => {
+    fetch('/api/onboarding/config')
+      .then(r => r.json())
+      .then((cfg: {
+        ownerName?: string;
+        llmEnabled?: boolean;
+        llmModel?: string;
+        llmOllamaUrl?: string;
+      }) => {
+        if (cfg.ownerName?.trim()) {
+          setOwnerName(cfg.ownerName.trim());
+          setIsReturningUser(true);
+          setSelected(new Set(DATA_SOURCES.map(s => s.id)));
+          setStep(2);
+        }
+        setLlm({
+          enabled: cfg.llmEnabled ?? false,
+          model: cfg.llmModel ?? 'llama3.2',
+          ollamaUrl: cfg.llmOllamaUrl ?? 'http://localhost:11434',
+        });
+      })
+      .catch(() => { /* stay on step 0 */ })
+      .finally(() => setConfigLoaded(true));
+  }, []);
 
   async function saveOwnerName() {
     await fetch('/api/onboarding/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ownerName: ownerName.trim() }),
+      body: JSON.stringify({
+        ownerName: ownerName.trim(),
+        llmEnabled: llm.enabled,
+        llmModel: llm.model,
+        llmOllamaUrl: llm.ollamaUrl,
+      }),
     });
   }
 
@@ -264,6 +321,18 @@ export default function OnboardingWizard() {
     setPhaseMessage('Uploading your files…');
     setError(null);
 
+    // Persist LLM settings before running the pipeline.
+    await fetch('/api/onboarding/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ownerName: ownerName.trim() || 'User',
+        llmEnabled: llm.enabled,
+        llmModel: llm.model,
+        llmOllamaUrl: llm.ollamaUrl,
+      }),
+    }).catch(() => { });
+
     try {
       // Upload all sources in parallel rather than sequentially
       const sourcesToUpload = DATA_SOURCES.filter(
@@ -288,7 +357,11 @@ export default function OnboardingWizard() {
 
       setUploadCount(uploadedFiles.length);
       setPhase('ingesting');
-      setPhaseMessage('Running ingest pipeline…');
+      setPhaseMessage(
+        llm.enabled
+          ? `Running ingest pipeline with AI enhancement (${llm.model})…`
+          : 'Running ingest pipeline…',
+      );
 
       const ingestRes = await fetch('/api/onboarding/ingest', { method: 'POST' });
       const ingestData = (await ingestRes.json()) as {
@@ -310,6 +383,15 @@ export default function OnboardingWizard() {
     }
   }
 
+  // Don't render until we know which step to start on (avoids flash of step 0).
+  if (!configLoaded) {
+    return (
+      <div className="fixed inset-0 z-50 bg-white flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
       <div className="min-h-screen flex flex-col">
@@ -324,52 +406,88 @@ export default function OnboardingWizard() {
               >
                 {ownerName.trim() ? ownerName.trim().charAt(0).toUpperCase() : 'W'}
               </div>
-              <span className="text-sm font-semibold text-gray-700">
-                {ownerName.trim() ? `${ownerName.trim()}pedia` : 'Personal Wiki'} Setup
-              </span>
+              <div>
+                <span className="text-sm font-semibold text-gray-700">
+                  {ownerName.trim() ? `${ownerName.trim()}pedia` : 'Personal Wiki'}
+                  {isReturningUser ? ' — Add Data' : ' Setup'}
+                </span>
+                {isReturningUser && step !== 0 && (
+                  <button
+                    onClick={() => setStep(0)}
+                    className="block text-[11px] text-blue-600 hover:underline leading-none mt-0.5"
+                  >
+                    Edit name
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
-              {STEPS.map((s, i) => (
-                <div key={s} className="flex items-center gap-1.5">
-                  <div
-                    title={s}
-                    className={cn(
-                      'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300',
-                      i < step
-                        ? 'bg-green-500 text-white'
-                        : i === step
-                          ? 'bg-blue-600 text-white shadow-md scale-110'
-                          : 'bg-gray-100 text-gray-400',
-                    )}
-                  >
-                    {i < step ? <Check className="w-3 h-3" /> : i + 1}
-                  </div>
-                  {i < STEPS.length - 1 && (
+            {/* Only show the step progress bar during the first-time setup flow */}
+            {!isReturningUser && (
+              <div className="flex items-center gap-1.5">
+                {STEPS.map((s, i) => (
+                  <div key={s} className="flex items-center gap-1.5">
                     <div
+                      title={s}
                       className={cn(
-                        'w-5 h-px transition-colors duration-300',
-                        i < step ? 'bg-green-400' : 'bg-gray-200',
+                        'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-300',
+                        i < step
+                          ? 'bg-green-500 text-white'
+                          : i === step
+                            ? 'bg-blue-600 text-white shadow-md scale-110'
+                            : 'bg-gray-100 text-gray-400',
                       )}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+                    >
+                      {i < step ? <Check className="w-3 h-3" /> : i + 1}
+                    </div>
+                    {i < STEPS.length - 1 && (
+                      <div
+                        className={cn(
+                          'w-5 h-px transition-colors duration-300',
+                          i < step ? 'bg-green-400' : 'bg-gray-200',
+                        )}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </header>
 
         {/* ── Content ── */}
         <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
           {step === 0 && (
-            <WelcomeStep
-              ownerName={ownerName}
-              onNameChange={setOwnerName}
-              onNext={async () => {
-                await saveOwnerName();
-                setStep(1);
-              }}
-            />
+            isReturningUser ? (
+              <EditNameStep
+                ownerName={ownerName}
+                onNameChange={setOwnerName}
+                onSave={async () => {
+                  try {
+                    await saveOwnerName();
+                    setStep(2);
+                  } catch (err) {
+                    console.error('Failed to save configuration:', err);
+                    setError('Failed to save configuration. Please try again.');
+                  }
+                }}
+                onCancel={() => setStep(2)}
+              />
+            ) : (
+              <WelcomeStep
+                ownerName={ownerName}
+                onNameChange={setOwnerName}
+                onNext={async () => {
+                  try {
+                    await saveOwnerName();
+                    setStep(1);
+                  } catch (err) {
+                    console.error("Failed to save configuration:", err);
+                    setError("Failed to save configuration. Please try again.");
+                  }
+                }}
+              />
+            )
           )}
 
           {step === 1 && (
@@ -393,8 +511,11 @@ export default function OnboardingWizard() {
               }
               onAddFiles={addFiles}
               onRemoveFile={removeFile}
-              onBack={() => setStep(1)}
+              onBack={isReturningUser ? () => router.push('/') : () => setStep(1)}
               onNext={startProcessing}
+              isReturningUser={isReturningUser}
+              llm={llm}
+              onLlmChange={setLlm}
             />
           )}
 
@@ -420,7 +541,138 @@ export default function OnboardingWizard() {
               onOpenWiki={() => router.push('/')}
             />
           )}
+
+          {/* ── Danger Zone ── */}
+          <div className="mt-16 pt-6 border-t border-red-100">
+            <div className="rounded-xl border border-red-200 bg-red-50/50 p-5">
+              <div className="flex items-start gap-3">
+                <Trash2 className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-[13px] font-semibold text-red-800 mb-1">
+                    Reset entire site
+                  </h3>
+                  <p className="text-[12px] text-red-600/80 leading-relaxed mb-3">
+                    Permanently deletes all wiki articles, raw entries, uploaded data, and your
+                    site configuration. This cannot be undone.
+                  </p>
+
+                  {resetDone ? (
+                    <div className="flex items-center gap-2 text-[12.5px] text-green-700 font-medium">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Site reset complete. Redirecting&hellip;
+                    </div>
+                  ) : !showResetConfirm ? (
+                    <button
+                      onClick={() => setShowResetConfirm(true)}
+                      className="text-[12.5px] font-semibold text-red-600 hover:text-red-700 border border-red-300 bg-white hover:bg-red-50 px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Reset Everything&hellip;
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={async () => {
+                          setResetting(true);
+                          try {
+                            const res = await fetch('/api/onboarding/reset', { method: 'POST' });
+                            if (!res.ok) throw new Error('Reset failed');
+                            setResetDone(true);
+                            setTimeout(() => {
+                              window.location.href = '/onboarding';
+                            }, 1500);
+                          } catch {
+                            setError('Failed to reset site. Check server logs.');
+                            setResetting(false);
+                          }
+                        }}
+                        disabled={resetting}
+                        className={cn(
+                          'text-[12.5px] font-semibold px-4 py-2 rounded-lg transition-colors',
+                          resetting
+                            ? 'bg-red-200 text-red-400 cursor-not-allowed'
+                            : 'bg-red-600 hover:bg-red-700 text-white',
+                        )}
+                      >
+                        {resetting ? 'Resetting…' : 'Yes, delete everything'}
+                      </button>
+                      <button
+                        onClick={() => setShowResetConfirm(false)}
+                        disabled={resetting}
+                        className="text-[12.5px] text-gray-500 hover:text-gray-700 px-3 py-2 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </main>
+      </div>
+    </div>
+  );
+}
+
+// ── Step: Edit Name (returning users only) ─────────────────────
+
+function EditNameStep({
+  ownerName,
+  onNameChange,
+  onSave,
+  onCancel,
+}: {
+  ownerName: string;
+  onNameChange: (name: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    if (!ownerName.trim()) return;
+    setSaving(true);
+    await onSave();
+    setSaving(false);
+  }
+
+  return (
+    <div className="max-w-sm mx-auto py-16">
+      <h2 className="text-2xl font-serif font-normal text-gray-900 mb-1">Edit your name</h2>
+      <p className="text-sm text-gray-500 mb-6">
+        This is the name shown in your wiki title and header.
+      </p>
+      <label htmlFor="edit-owner-name" className="block text-sm font-semibold text-gray-700 mb-2">
+        Your name
+      </label>
+      <input
+        id="edit-owner-name"
+        type="text"
+        value={ownerName}
+        onChange={e => onNameChange(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter' && ownerName.trim()) handleSave(); }}
+        autoFocus
+        className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-base text-gray-900 placeholder:text-gray-300 transition-all mb-4"
+      />
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleSave}
+          disabled={!ownerName.trim() || saving}
+          className={cn(
+            'flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm',
+            ownerName.trim() && !saving
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none',
+          )}
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        <button
+          onClick={onCancel}
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );
@@ -685,6 +937,9 @@ function UploadStep({
   onRemoveFile,
   onBack,
   onNext,
+  isReturningUser = false,
+  llm,
+  onLlmChange,
 }: {
   selectedSources: DataSource[];
   uploadedFiles: UploadedFile[];
@@ -694,6 +949,9 @@ function UploadStep({
   onRemoveFile: (id: string) => void;
   onBack: () => void;
   onNext: () => void;
+  isReturningUser?: boolean;
+  llm: LlmConfig;
+  onLlmChange: (cfg: LlmConfig) => void;
 }) {
   const totalFiles = uploadedFiles.length;
 
@@ -701,11 +959,12 @@ function UploadStep({
     <div>
       <div className="mb-6">
         <h2 className="text-2xl font-serif font-normal text-gray-900 mb-1">
-          Upload your data
+          {isReturningUser ? 'Add more data' : 'Upload your data'}
         </h2>
         <p className="text-sm text-gray-500">
-          Follow the export instructions for each source, then drag and drop your
-          files. You can skip this step and upload later.
+          {isReturningUser
+            ? 'Select a source, then drag and drop your files to add them to your wiki.'
+            : 'Follow the export instructions for each source, then drag and drop your files. You can skip this step and upload later.'}
         </p>
       </div>
 
@@ -723,12 +982,15 @@ function UploadStep({
         ))}
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+      <LlmSettingsPanel llm={llm} onChange={onLlmChange} />
+
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-6">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4" />
+          {isReturningUser ? 'Back to wiki' : 'Back'}
         </button>
         <div className="flex items-center gap-3">
           <span className="text-sm text-gray-400">
@@ -738,13 +1000,255 @@ function UploadStep({
           </span>
           <button
             onClick={onNext}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm"
+            disabled={isReturningUser && totalFiles === 0}
+            className={cn(
+              'flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm',
+              isReturningUser && totalFiles === 0
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+                : 'bg-blue-600 hover:bg-blue-700 text-white',
+            )}
           >
-            {totalFiles === 0 ? 'Skip for now' : 'Start Processing'}
+            {totalFiles === 0
+              ? (isReturningUser ? 'Select files to upload' : 'Skip for now')
+              : 'Start Processing'}
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── LLM Settings Panel ─────────────────────────────────────────
+
+const SUGGESTED_MODELS = [
+  'llama3.2',
+  'llama3.1',
+  'llama3',
+  'mistral',
+  'mistral-nemo',
+  'qwen2.5',
+  'qwen2.5:14b',
+  'gemma3',
+  'phi4',
+  'deepseek-r1',
+];
+
+function LlmSettingsPanel({
+  llm,
+  onChange,
+}: {
+  llm: LlmConfig;
+  onChange: (cfg: LlmConfig) => void;
+}) {
+  const [expanded, setExpanded] = useState(llm.enabled);
+  const [status, setStatus] = useState<OllamaStatus>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [installedModels, setInstalledModels] = useState<string[]>([]);
+
+  function update(patch: Partial<LlmConfig>) {
+    onChange({ ...llm, ...patch });
+  }
+
+  function toggle() {
+    const next = !llm.enabled;
+    update({ enabled: next });
+    if (next && !expanded) setExpanded(true);
+  }
+
+  async function testConnection() {
+    setStatus('checking');
+    setStatusMessage('');
+    setInstalledModels([]);
+    try {
+      const url = `/api/onboarding/test-ollama?url=${encodeURIComponent(llm.ollamaUrl)}`;
+      const res = await fetch(url);
+      const data = (await res.json()) as {
+        connected: boolean;
+        models?: string[];
+        error?: string;
+      };
+      if (data.connected) {
+        setStatus('ok');
+        const models = data.models ?? [];
+        setInstalledModels(models);
+        setStatusMessage(
+          models.length > 0
+            ? `Connected — ${models.length} model${models.length !== 1 ? 's' : ''} installed`
+            : 'Connected — no models found (run: ollama pull llama3.2)',
+        );
+        // Auto-select first installed model if current choice isn't installed
+        if (models.length > 0 && !models.includes(llm.model)) {
+          update({ model: models[0] });
+        }
+      } else {
+        setStatus('error');
+        setStatusMessage(data.error ?? 'Could not connect to Ollama');
+      }
+    } catch {
+      setStatus('error');
+      setStatusMessage('Request failed — is Ollama running?');
+    }
+  }
+
+  const allModels = Array.from(new Set([...installedModels, ...SUGGESTED_MODELS]));
+
+  return (
+    <div className="rounded-xl border border-gray-200 overflow-hidden">
+      {/* Header row */}
+      <button
+        onClick={() => setExpanded(p => !p)}
+        className="w-full flex items-center gap-3 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+      >
+        <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center shrink-0">
+          <Bot className="w-4 h-4 text-violet-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-[13px] font-semibold text-gray-800">
+            AI-Enhanced Parsing
+          </span>
+          <span className="ml-2 text-[11px] text-gray-400">
+            {llm.enabled ? `On · ${llm.model}` : 'Optional'}
+          </span>
+        </div>
+
+        {/* Inline toggle */}
+        <div
+          role="switch"
+          aria-checked={llm.enabled}
+          onClick={e => { e.stopPropagation(); toggle(); }}
+          className={cn(
+            'relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0 cursor-pointer',
+            llm.enabled ? 'bg-violet-600' : 'bg-gray-300',
+          )}
+        >
+          <span
+            className={cn(
+              'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200',
+              llm.enabled ? 'translate-x-4' : 'translate-x-0.5',
+            )}
+          />
+        </div>
+
+        {expanded
+          ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
+      </button>
+
+      {/* Body */}
+      {expanded && (
+        <div className="p-4 bg-white space-y-4">
+          <p className="text-[12.5px] text-gray-500 leading-relaxed">
+            When enabled, a locally-running Ollama model will clean up extracted PDF and
+            HTML text, summarise CSV rows into prose, auto-detect unknown file formats,
+            and split plain-text journals into individual dated entries.
+          </p>
+
+          {/* Ollama URL */}
+          <div>
+            <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
+              Ollama URL
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={llm.ollamaUrl}
+                onChange={e => update({ ollamaUrl: e.target.value })}
+                placeholder="http://localhost:11434"
+                className="flex-1 px-3 py-2 text-[13px] border border-gray-200 rounded-lg focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all font-mono"
+              />
+              <button
+                onClick={testConnection}
+                disabled={status === 'checking'}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12.5px] font-semibold border transition-colors shrink-0',
+                  status === 'checking'
+                    ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
+                    : 'border-violet-200 text-violet-700 bg-violet-50 hover:bg-violet-100',
+                )}
+              >
+                {status === 'checking' ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Wifi className="w-3.5 h-3.5" />
+                )}
+                Test
+              </button>
+            </div>
+
+            {/* Connection status */}
+            {status !== 'idle' && status !== 'checking' && (
+              <div
+                className={cn(
+                  'flex items-center gap-1.5 mt-2 text-[12px] font-medium',
+                  status === 'ok' ? 'text-green-700' : 'text-red-600',
+                )}
+              >
+                {status === 'ok'
+                  ? <Wifi className="w-3.5 h-3.5" />
+                  : <WifiOff className="w-3.5 h-3.5" />}
+                {statusMessage}
+              </div>
+            )}
+          </div>
+
+          {/* Model */}
+          <div>
+            <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
+              Model
+            </label>
+            <input
+              type="text"
+              list="ollama-models"
+              value={llm.model}
+              onChange={e => update({ model: e.target.value })}
+              placeholder="llama3.2"
+              className="w-full px-3 py-2 text-[13px] border border-gray-200 rounded-lg focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100 transition-all font-mono"
+            />
+            <datalist id="ollama-models">
+              {allModels.map(m => (
+                <option key={m} value={m} />
+              ))}
+            </datalist>
+
+            {/* Installed model pills */}
+            {installedModels.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                <span className="text-[11px] text-gray-400 self-center">Installed:</span>
+                {installedModels.map(m => (
+                  <button
+                    key={m}
+                    onClick={() => update({ model: m })}
+                    className={cn(
+                      'text-[11px] px-2 py-0.5 rounded-full border font-mono transition-colors',
+                      llm.model === m
+                        ? 'bg-violet-600 border-violet-600 text-white'
+                        : 'border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-700',
+                    )}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Install hint */}
+          {status === 'ok' && installedModels.length === 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[12px] text-amber-800">
+              No models found. Install one first:{' '}
+              <code className="bg-amber-100 px-1 rounded font-mono">ollama pull llama3.2</code>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-[12px] text-red-800">
+              Make sure Ollama is running:{' '}
+              <code className="bg-red-100 px-1 rounded font-mono">ollama serve</code>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
