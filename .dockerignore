@@ -13,5 +13,4 @@ agent-transcripts/
 *.md
 !wiki-ui/**/*.md
 !wiki/**/*.md
-ingest.py
 assets/

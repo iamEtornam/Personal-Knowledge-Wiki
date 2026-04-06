@@ -292,7 +292,13 @@ def ingest_directory(dir_path: Path, source_type: str) -> int:
             if not extract_dir.exists():
                 print(f"    Extracting {item.name}…")
                 with zipfile.ZipFile(item) as z:
-                    z.extractall(extract_dir)
+                    for member in z.infolist():
+                        member_path = os.path.join(extract_dir, member.filename)
+                        if not os.path.abspath(member_path).startswith(
+                            os.path.abspath(str(extract_dir))
+                        ):
+                            continue
+                        z.extract(member, extract_dir)
             count += ingest_directory(extract_dir, source_type)
             continue
 

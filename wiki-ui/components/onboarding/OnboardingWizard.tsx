@@ -370,8 +370,13 @@ export default function OnboardingWizard() {
               ownerName={ownerName}
               onNameChange={setOwnerName}
               onNext={async () => {
-                await saveOwnerName();
-                setStep(1);
+                try {
+                  await saveOwnerName();
+                  setStep(1);
+                } catch (err) {
+                  console.error("Failed to save configuration:", err);
+                  setError("Failed to save configuration. Please try again.");
+                }
               }}
             />
           )}

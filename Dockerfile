@@ -13,7 +13,6 @@ WORKDIR /app
 COPY . .
 COPY --from=deps /app/wiki-ui/node_modules wiki-ui/node_modules
 
-# Ensure wiki directory exists even for fresh deployments
 RUN mkdir -p wiki
 
 WORKDIR /app/wiki-ui
@@ -21,6 +20,7 @@ RUN npm run build
 
 # --- Production ---
 FROM base AS runner
+RUN apk add --no-cache python3
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -30,17 +30,20 @@ ENV PORT=3000
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Ensure wiki directory exists at runtime
-RUN mkdir -p wiki && chown nextjs:nodejs wiki
-COPY --from=builder /app/wiki-config.json* ./
+RUN mkdir -p data raw/entries wiki && chown -R nextjs:nodejs /app
 
-# Standalone output is flat — place it under wiki-ui/ so that
+COPY --from=builder --chown=nextjs:nodejs /app/wiki/ wiki/
+COPY --from=builder --chown=nextjs:nodejs /app/wiki-config.json* ./
+COPY --from=builder --chown=nextjs:nodejs /app/ingest.py ./
+
+# Standalone output placed under wiki-ui/ so that
 # process.cwd() + "/../wiki" resolves to /app/wiki at runtime.
 COPY --from=builder --chown=nextjs:nodejs /app/wiki-ui/.next/standalone wiki-ui/
-COPY --from=builder /app/wiki-ui/public wiki-ui/public
+COPY --from=builder --chown=nextjs:nodejs /app/wiki-ui/public wiki-ui/public
 COPY --from=builder --chown=nextjs:nodejs /app/wiki-ui/.next/static wiki-ui/.next/static
 
+WORKDIR /app/wiki-ui
 USER nextjs
 EXPOSE 3000
 
-CMD ["node", "wiki-ui/server.js"]
+CMD ["node", "server.js"]
