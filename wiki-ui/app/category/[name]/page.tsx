@@ -31,7 +31,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { name } = await params;
-  return { title: `${name.charAt(0).toUpperCase() + name.slice(1)} — Personal Wiki` };
+  return { title: `${name.charAt(0).toUpperCase() + name.slice(1)} | Personal Wiki` };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
