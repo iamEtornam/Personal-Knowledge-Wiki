@@ -1,7 +1,54 @@
 {
-  "_meta": {
-    "description": "Reverse link index. Maps article titles to the list of articles that link to them.",
-    "last_rebuilt": null,
-    "total_links": 0
-  }
+  "Ghana Tech Lab": [
+    "Community Teaching",
+    "Software Engineering Career",
+    "Google Developer Expert",
+    "Bethniel Finance Technology",
+    "CowTribe"
+  ],
+  "Community Teaching": [
+    "Ghana Tech Lab",
+    "Google Developer Expert"
+  ],
+  "Software Engineering Career": [
+    "Ghana Tech Lab",
+    "Community Teaching",
+    "Google Developer Expert",
+    "Bkey Inc.",
+    "Bethniel Finance Technology",
+    "Really Great Tech",
+    "CowTribe",
+    "Spry Limited"
+  ],
+  "Google Developer Expert": [
+    "Ghana Tech Lab",
+    "Community Teaching",
+    "Software Engineering Career"
+  ],
+  "Bkey Inc.": [
+    "Software Engineering Career",
+    "Really Great Tech",
+    "CowTribe"
+  ],
+  "Bethniel Finance Technology": [
+    "Software Engineering Career",
+    "Spry Limited"
+  ],
+  "Really Great Tech": [
+    "Software Engineering Career",
+    "Bkey Inc.",
+    "CowTribe"
+  ],
+  "CowTribe": [
+    "Software Engineering Career",
+    "Bethniel Finance Technology",
+    "Really Great Tech",
+    "Spry Limited"
+  ],
+  "Spry Limited": [
+    "Software Engineering Career",
+    "Bethniel Finance Technology",
+    "Really Great Tech",
+    "CowTribe"
+  ]
 }

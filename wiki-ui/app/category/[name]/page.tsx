@@ -1,8 +1,9 @@
-import { getAllArticles } from "@/lib/wiki";
 import { getCategoryTheme } from "@/lib/category-theme";
+import { getSiteName } from "@/lib/config";
+import { getAllArticles } from "@/lib/wiki";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 
 interface CategoryPageProps {
   params: Promise<{ name: string }>;
@@ -16,13 +17,13 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { name } = await params;
-  return { title: `${name.charAt(0).toUpperCase() + name.slice(1)} | Personal Wiki` };
+  return { title: `${name.charAt(0).toUpperCase() + name.slice(1)} | ${getSiteName()}` };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const { name }   = await params;
+  const { name } = await params;
   const allArticles = getAllArticles();
-  const articles   = allArticles.filter(a => a.directory === name);
+  const articles = allArticles.filter(a => a.directory === name);
   if (articles.length === 0) notFound();
 
   const t = getCategoryTheme(name);

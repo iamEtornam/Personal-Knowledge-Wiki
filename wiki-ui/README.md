@@ -18,7 +18,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Typography uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) with [Google Fonts](https://fonts.google.com): [Open Sans](https://fonts.google.com/specimen/Open+Sans) for UI and article body, [Playfair Display](https://fonts.google.com/specimen/Playfair+Display) for headings and `font-serif`, and [Raleway](https://fonts.google.com/specimen/Raleway) for `font-heading` (cards and sheets).
 
 ## Learn More
 

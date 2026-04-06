@@ -1,27 +1,49 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
-import Link from "next/link";
-import GithubSlugger from "github-slugger";
-import type { Element as HastElement } from "hast";
-import { Components } from "react-markdown";
-import { hastHeadingPlainText } from "@/lib/heading-slug";
 import { preprocessWikiContent } from "@/lib/preprocess-wiki-content";
+import GithubSlugger from "github-slugger";
+import Link from "next/link";
+import ReactMarkdown, { Components } from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
 
 interface ArticleContentProps {
   content: string;
   allSlugs: string[];
 }
 
+// Strip markdown decorators to approximate plain heading text,
+// matching what hastHeadingPlainText produces from the rendered hast.
+function stripHeadingMarkdown(raw: string): string {
+  return raw
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/_([^_]+)_/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .trim();
+}
+
 export default function ArticleContent({
   content,
   allSlugs,
 }: ArticleContentProps) {
-  const slugger = new GithubSlugger();
-
   const processedContent = preprocessWikiContent(content, allSlugs);
+
+  // Pre-compute heading IDs from the processed markdown string.
+  // Doing this outside the React render cycle makes server and client
+  // always produce the same ID sequence, preventing hydration mismatches.
+  const headingIds: string[] = [];
+  const slugger = new GithubSlugger();
+  for (const m of processedContent.matchAll(/^(#{2,3})\s+(.+)$/gm)) { // h1 is suppressed; only count h2/h3
+    headingIds.push(slugger.slug(stripHeadingMarkdown(m[2])));
+  }
+
+  // Consumed in document order during rendering. Safe because React
+  // processes each component invocation's JSX synchronously and sequentially.
+  let hi = 0;
 
   const components: Components = {
     a({ href, children, title, ...props }) {
@@ -65,16 +87,21 @@ export default function ArticleContent({
         </a>
       );
     },
-    h2({ node, children, ...props }) {
-      const id = slugger.slug(hastHeadingPlainText(node as HastElement | undefined));
+    // The page template already renders the article title as <h1>.
+    // Suppress any # heading in the markdown body to avoid duplication.
+    h1() {
+      return null;
+    },
+    h2({ children, ...props }) {
+      const id = headingIds[hi++] ?? "";
       return (
         <h2 {...props} id={id}>
           {children}
         </h2>
       );
     },
-    h3({ node, children, ...props }) {
-      const id = slugger.slug(hastHeadingPlainText(node as HastElement | undefined));
+    h3({ children, ...props }) {
+      const id = headingIds[hi++] ?? "";
       return (
         <h3 {...props} id={id}>
           {children}

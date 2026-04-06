@@ -1,17 +1,19 @@
-import { getAllArticles, getDirectories, getBacklinks } from "@/lib/wiki";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { BarChart2, Link2, FileText, Tag, AlertCircle, TrendingUp } from "lucide-react";
+import { getSiteName } from "@/lib/config";
+import { getAllArticles, getBacklinks, getDirectories } from "@/lib/wiki";
+import { AlertCircle, FileText, Link2, Tag } from "lucide-react";
+import Link from "next/link";
 
-export const metadata = { title: "Stats | Personal Wiki" };
+export function generateMetadata() {
+  return { title: `Stats | ${getSiteName()}` };
+}
 
 export default function StatsPage() {
-  const articles   = getAllArticles();
-  const dirs       = getDirectories();
-  const backlinks  = getBacklinks();
+  const articles = getAllArticles();
+  const dirs = getDirectories();
+  const backlinks = getBacklinks();
   const totalWords = articles.reduce((s, a) => s + a.wordCount, 0);
-  const avgWords   = articles.length > 0 ? Math.round(totalWords / articles.length) : 0;
+  const avgWords = articles.length > 0 ? Math.round(totalWords / articles.length) : 0;
 
   const mostLinked = articles
     .map(a => ({ article: a, count: (backlinks[a.title] || []).length }))
@@ -31,10 +33,10 @@ export default function StatsPage() {
       {/* KPI row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
         {[
-          { label: "Articles",   value: articles.length.toLocaleString(),  color: "text-blue-600",   bg: "bg-blue-50",   border: "border-blue-100" },
-          { label: "Categories", value: dirs.length.toString(),            color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100" },
-          { label: "Total Words",value: totalWords.toLocaleString(),       color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-100" },
-          { label: "Avg Words",  value: avgWords.toLocaleString(),         color: "text-green-600",  bg: "bg-green-50",  border: "border-green-100" },
+          { label: "Articles", value: articles.length.toLocaleString(), color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
+          { label: "Categories", value: dirs.length.toString(), color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-100" },
+          { label: "Total Words", value: totalWords.toLocaleString(), color: "text-orange-600", bg: "bg-orange-50", border: "border-orange-100" },
+          { label: "Avg Words", value: avgWords.toLocaleString(), color: "text-green-600", bg: "bg-green-50", border: "border-green-100" },
         ].map(s => (
           <div key={s.label} className={`rounded-xl border ${s.border} ${s.bg} p-4 text-center`}>
             <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
