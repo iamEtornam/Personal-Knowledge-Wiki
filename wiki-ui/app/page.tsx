@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { BookOpen, Users, Lightbulb, Clock, TrendingUp, Star } from "lucide-react";
+import { BookOpen, Users, Lightbulb, Clock, TrendingUp, Star, Sparkles } from "lucide-react";
 
 /* colour palette per category */
 const SECTION_STYLES: Record<string, { header: string; border: string; badge: string; icon?: React.ReactNode }> = {
@@ -227,10 +227,18 @@ function EmptyState() {
       <div className="text-6xl mb-6">📚</div>
       <h2 className="text-2xl font-serif font-normal text-gray-800 mb-3">Your wiki is empty</h2>
       <p className="text-sm text-gray-500 leading-relaxed mb-6">
-        Drop your data files into <code className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">data/</code> and ask your agent to build the wiki.
+        Connect your data sources to build a personal Wikipedia of your life — people,
+        projects, memories, and everything in between.
       </p>
+      <Link
+        href="/onboarding"
+        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors shadow-md no-underline mb-8"
+      >
+        <Sparkles className="w-4 h-4" />
+        Set up your wiki
+      </Link>
       <div className="bg-gray-950 text-gray-100 rounded-xl p-5 text-left font-mono text-sm leading-8">
-        <p><span className="text-gray-500"># Tell your agent:</span></p>
+        <p><span className="text-gray-500"># Or tell your agent:</span></p>
         <p>Ingest my data</p>
         <p>Absorb all entries</p>
         <p>What are my recurring themes?</p>
