@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 import { Open_Sans, Playfair_Display, Raleway } from "next/font/google";
 import "./globals.css";
 
+export const dynamic = "force-dynamic";
+
 const openSans = Open_Sans({
   subsets: ["latin"],
   variable: "--font-sans",

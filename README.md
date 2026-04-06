@@ -61,7 +61,9 @@ personal-wiki/
 │   ├── _backlinks.json           # Reverse link index
 │   ├── _absorb_log.json          # Tracks which entries are absorbed
 │   └── (categories emerge here)
-└── wiki-ui/                      # Wikipedia-clone UI (Next.js)
+├── wiki-ui/                      # Wikipedia-clone UI (Next.js)
+├── Dockerfile                    # Production Docker build
+└── .dockerignore                 # Files excluded from Docker builds
 ```
 
 ---
@@ -199,3 +201,33 @@ Based on the pattern from Karpathy and Farzaa:
 
 
 The key insight: the wiki is a **persistent, compounding artifact**. Cross-references already exist. Contradictions are flagged. Synthesis reflects everything you've read. It gets richer with every source and every question.
+
+---
+
+## Deploying to a VPS
+
+The wiki-ui ships with a multi-stage `Dockerfile` that produces a minimal production image. It works with any Docker-based hosting platform (Dokploy, Coolify, Portainer, bare Docker).
+
+### Quick start
+
+```bash
+docker build -t personal-wiki .
+docker run -p 3000:3000 personal-wiki
+```
+
+### Deploying with Dokploy
+
+1. Push your repo to GitHub (or any Git host).
+2. In the Dokploy dashboard, create a **Project** and add an **Application**.
+3. Set the source to **Git** and point it at your repository and branch.
+4. Build type: **Dockerfile** (auto-detected from the root `Dockerfile`).
+5. Under **Domains**, add your domain — Dokploy provisions TLS automatically via Traefik.
+6. Set the container port to **3000**.
+7. Deploy.
+
+### Updating wiki content
+
+Wiki articles are baked into the Docker image at build time. To update after adding new articles:
+
+- **Re-deploy** from Dokploy — it rebuilds with the latest `wiki/` content from your repo.
+- **Volume mount** — mount a host directory to `/app/wiki` in the container for live updates without rebuilding. Upload new content via rsync or scp.

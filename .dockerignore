@@ -1,0 +1,12 @@
+wiki-ui/node_modules
+wiki-ui/.next
+wiki-ui/.git
+wiki-ui/pnpm-lock.yaml
+raw/
+data/
+.git
+.claude
+.cursor
+*.pyc
+__pycache__
+agent-transcripts/
