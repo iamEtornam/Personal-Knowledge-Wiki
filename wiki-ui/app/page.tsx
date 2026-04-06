@@ -1,27 +1,29 @@
 import { getAllArticles, getDirectories, getWikiIndex } from "@/lib/wiki";
-import { getCategoryTheme } from "@/lib/category-theme";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { BookOpen, Users, Lightbulb, Clock, TrendingUp, Star, Sparkles } from "lucide-react";
-import type { ReactNode } from "react";
+import { BookOpen, Users, Lightbulb, Clock, TrendingUp, Star } from "lucide-react";
 
-/** Optional icons per directory; colors come from {@link getCategoryTheme}. */
-const SECTION_ICONS: Record<string, ReactNode> = {
-  people: <Users className="w-4 h-4" />,
-  philosophies: <Lightbulb className="w-4 h-4" />,
-  books: <BookOpen className="w-4 h-4" />,
-  eras: <Clock className="w-4 h-4" />,
+/* colour palette per category */
+const SECTION_STYLES: Record<string, { header: string; border: string; badge: string; icon?: React.ReactNode }> = {
+  people:       { header: "bg-blue-50",   border: "border-blue-200",  badge: "bg-blue-100 text-blue-700 border-blue-200",   icon: <Users className="w-4 h-4" /> },
+  projects:     { header: "bg-orange-50", border: "border-orange-200",badge: "bg-orange-100 text-orange-700 border-orange-200" },
+  philosophies: { header: "bg-purple-50", border: "border-purple-200",badge: "bg-purple-100 text-purple-700 border-purple-200", icon: <Lightbulb className="w-4 h-4" /> },
+  patterns:     { header: "bg-green-50",  border: "border-green-200", badge: "bg-green-100 text-green-700 border-green-200"  },
+  places:       { header: "bg-rose-50",   border: "border-rose-200",  badge: "bg-rose-100 text-rose-700 border-rose-200"    },
+  films:        { header: "bg-pink-50",   border: "border-pink-200",  badge: "bg-pink-100 text-pink-700 border-pink-200"    },
+  books:        { header: "bg-amber-50",  border: "border-amber-200", badge: "bg-amber-100 text-amber-700 border-amber-200", icon: <BookOpen className="w-4 h-4" /> },
+  music:        { header: "bg-teal-50",   border: "border-teal-200",  badge: "bg-teal-100 text-teal-700 border-teal-200"    },
+  eras:         { header: "bg-slate-50",  border: "border-slate-200", badge: "bg-slate-100 text-slate-700 border-slate-200", icon: <Clock className="w-4 h-4" /> },
+  decisions:    { header: "bg-yellow-50", border: "border-yellow-200",badge: "bg-yellow-100 text-yellow-700 border-yellow-200"},
+  ideas:        { header: "bg-cyan-50",   border: "border-cyan-200",  badge: "bg-cyan-100 text-cyan-700 border-cyan-200"    },
+  tools:        { header: "bg-indigo-50", border: "border-indigo-200",badge: "bg-indigo-100 text-indigo-700 border-indigo-200"},
 };
 
-function getSectionStyle(name: string) {
-  const t = getCategoryTheme(name);
-  return {
-    header: t.homeHeader,
-    border: t.homeBorder,
-    badge: t.homeBadge,
-    icon: SECTION_ICONS[name],
+function getStyle(name: string) {
+  return SECTION_STYLES[name] ?? {
+    header: "bg-gray-50", border: "border-gray-200", badge: "bg-gray-100 text-gray-600 border-gray-200",
   };
 }
 
@@ -75,7 +77,7 @@ export default function HomePage() {
                     </Link>
                     <div className="flex items-center gap-2 shrink-0">
                       {a.directory && (
-                        <Badge variant="outline" className={`text-[10px] py-0 capitalize ${getSectionStyle(a.directory).badge}`}>
+                        <Badge variant="outline" className={`text-[10px] py-0 capitalize ${getStyle(a.directory).badge}`}>
                           {a.directory}
                         </Badge>
                       )}
@@ -92,7 +94,7 @@ export default function HomePage() {
             <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Browse by Category</h2>
             <div className="grid grid-cols-2 gap-3">
               {dirs.map(d => {
-                const style   = getSectionStyle(d.name);
+                const style   = getStyle(d.name);
                 const topArticles = articles.filter(a => a.directory === d.name).slice(0, 3);
                 return (
                   <Card key={d.name} className={`border ${style.border} hover:shadow-md transition-shadow`}>
@@ -225,18 +227,10 @@ function EmptyState() {
       <div className="text-6xl mb-6">📚</div>
       <h2 className="text-2xl font-serif font-normal text-gray-800 mb-3">Your wiki is empty</h2>
       <p className="text-sm text-gray-500 leading-relaxed mb-6">
-        Connect your data sources to build a personal Wikipedia of your life — people,
-        projects, memories, and everything in between.
+        Drop your data files into <code className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">data/</code> and ask your agent to build the wiki.
       </p>
-      <Link
-        href="/onboarding"
-        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-colors shadow-md no-underline mb-8"
-      >
-        <Sparkles className="w-4 h-4" />
-        Set up your wiki
-      </Link>
       <div className="bg-gray-950 text-gray-100 rounded-xl p-5 text-left font-mono text-sm leading-8">
-        <p><span className="text-gray-500"># Or tell your agent:</span></p>
+        <p><span className="text-gray-500"># Tell your agent:</span></p>
         <p>Ingest my data</p>
         <p>Absorb all entries</p>
         <p>What are my recurring themes?</p>

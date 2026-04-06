@@ -3,17 +3,32 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { getCategoryTheme } from "@/lib/category-theme";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Search, AlignLeft, BarChart2, GitBranch, Home, PlusCircle } from "lucide-react";
+import { Search, BookOpen, LayoutGrid, AlignLeft, BarChart2, GitBranch, Home } from "lucide-react";
 
 interface Directory { name: string; count: number }
 interface WikiSidebarProps { directories: Directory[]; totalArticles: number }
 
+const DIR_COLORS: Record<string, string> = {
+  people:      "bg-blue-100 text-blue-700 border-blue-200",
+  projects:    "bg-orange-100 text-orange-700 border-orange-200",
+  philosophies:"bg-purple-100 text-purple-700 border-purple-200",
+  patterns:    "bg-green-100 text-green-700 border-green-200",
+  places:      "bg-rose-100 text-rose-700 border-rose-200",
+  films:       "bg-pink-100 text-pink-700 border-pink-200",
+  books:       "bg-amber-100 text-amber-700 border-amber-200",
+  music:       "bg-teal-100 text-teal-700 border-teal-200",
+  eras:        "bg-slate-100 text-slate-700 border-slate-200",
+  decisions:   "bg-yellow-100 text-yellow-700 border-yellow-200",
+  ideas:       "bg-cyan-100 text-cyan-700 border-cyan-200",
+  tools:       "bg-indigo-100 text-indigo-700 border-indigo-200",
+};
+
 function getDirColor(name: string) {
-  return getCategoryTheme(name).sidebarBadge;
+  return DIR_COLORS[name] ?? "bg-gray-100 text-gray-600 border-gray-200";
 }
 
 export default function WikiSidebar({ directories, totalArticles }: WikiSidebarProps) {
@@ -62,11 +77,10 @@ export default function WikiSidebar({ directories, totalArticles }: WikiSidebarP
 
           {/* Navigation */}
           <SidebarSection title="Navigation">
-            <NavLink href="/"            label="Main Page"    icon={<Home className="w-3.5 h-3.5" />}       active={pathname === "/"} />
-            <NavLink href="/all"         label="All Articles" icon={<AlignLeft className="w-3.5 h-3.5" />}  active={pathname === "/all"} />
-            <NavLink href="/graph"       label="Graph View"   icon={<GitBranch className="w-3.5 h-3.5" />}  active={pathname === "/graph"} />
-            <NavLink href="/stats"       label="Stats"        icon={<BarChart2 className="w-3.5 h-3.5" />}  active={pathname === "/stats"} />
-            <NavLink href="/onboarding"  label="Add Data"     icon={<PlusCircle className="w-3.5 h-3.5" />} active={pathname === "/onboarding"} highlight />
+            <NavLink href="/"         label="Main Page"    icon={<Home className="w-3.5 h-3.5" />}     active={pathname === "/"} />
+            <NavLink href="/all"      label="All Articles" icon={<AlignLeft className="w-3.5 h-3.5" />} active={pathname === "/all"} />
+            <NavLink href="/graph"    label="Graph View"   icon={<GitBranch className="w-3.5 h-3.5" />} active={pathname === "/graph"} />
+            <NavLink href="/stats"    label="Stats"        icon={<BarChart2 className="w-3.5 h-3.5" />} active={pathname === "/stats"} />
           </SidebarSection>
 
           {directories.length > 0 && (
@@ -114,27 +128,13 @@ function SidebarSection({ title, children }: { title: string; children: React.Re
   );
 }
 
-function NavLink({
-  href,
-  label,
-  icon,
-  active,
-  highlight,
-}: {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-  active: boolean;
-  highlight?: boolean;
-}) {
+function NavLink({ href, label, icon, active }: { href: string; label: string; icon: React.ReactNode; active: boolean }) {
   return (
     <Link
       href={href}
       className={`flex items-center gap-2 px-3 py-1.5 rounded-md mx-2 mb-0.5 no-underline text-[12.5px] font-medium transition-colors ${
         active
           ? "bg-blue-600 text-white shadow-sm"
-          : highlight
-          ? "text-blue-600 hover:bg-blue-50 hover:text-blue-700 border border-blue-200 bg-blue-50/50"
           : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
       }`}
     >
