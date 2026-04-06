@@ -14,6 +14,7 @@ import {
   Network,
   Search,
   Sparkles,
+  Trash2,
   Upload,
   X,
 } from 'lucide-react';
@@ -227,6 +228,9 @@ export default function OnboardingWizard() {
   const [uploadCount, setUploadCount] = useState(0);
   const [ingestRan, setIngestRan] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
 
   async function saveOwnerName() {
     await fetch('/api/onboarding/config', {
@@ -420,6 +424,73 @@ export default function OnboardingWizard() {
               onOpenWiki={() => router.push('/')}
             />
           )}
+
+          {/* ── Danger Zone ── */}
+          <div className="mt-16 pt-6 border-t border-red-100">
+            <div className="rounded-xl border border-red-200 bg-red-50/50 p-5">
+              <div className="flex items-start gap-3">
+                <Trash2 className="w-5 h-5 text-red-400 mt-0.5 shrink-0" />
+                <div className="flex-1">
+                  <h3 className="text-[13px] font-semibold text-red-800 mb-1">
+                    Reset entire site
+                  </h3>
+                  <p className="text-[12px] text-red-600/80 leading-relaxed mb-3">
+                    Permanently deletes all wiki articles, raw entries, uploaded data, and your
+                    site configuration. This cannot be undone.
+                  </p>
+
+                  {resetDone ? (
+                    <div className="flex items-center gap-2 text-[12.5px] text-green-700 font-medium">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Site reset complete. Redirecting&hellip;
+                    </div>
+                  ) : !showResetConfirm ? (
+                    <button
+                      onClick={() => setShowResetConfirm(true)}
+                      className="text-[12.5px] font-semibold text-red-600 hover:text-red-700 border border-red-300 bg-white hover:bg-red-50 px-4 py-2 rounded-lg transition-colors"
+                    >
+                      Reset Everything&hellip;
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={async () => {
+                          setResetting(true);
+                          try {
+                            const res = await fetch('/api/onboarding/reset', { method: 'POST' });
+                            if (!res.ok) throw new Error('Reset failed');
+                            setResetDone(true);
+                            setTimeout(() => {
+                              window.location.href = '/onboarding';
+                            }, 1500);
+                          } catch {
+                            setError('Failed to reset site. Check server logs.');
+                            setResetting(false);
+                          }
+                        }}
+                        disabled={resetting}
+                        className={cn(
+                          'text-[12.5px] font-semibold px-4 py-2 rounded-lg transition-colors',
+                          resetting
+                            ? 'bg-red-200 text-red-400 cursor-not-allowed'
+                            : 'bg-red-600 hover:bg-red-700 text-white',
+                        )}
+                      >
+                        {resetting ? 'Resetting…' : 'Yes, delete everything'}
+                      </button>
+                      <button
+                        onClick={() => setShowResetConfirm(false)}
+                        disabled={resetting}
+                        className="text-[12.5px] text-gray-500 hover:text-gray-700 px-3 py-2 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     </div>
