@@ -113,8 +113,12 @@ export default function HomePage() {
                     <CardContent className="px-4 py-2">
                       <ul className="space-y-1">
                         {topArticles.map(a => (
-                          <li key={a.slug}>
-                            <Link href={`/wiki/${a.slug}`} className="text-[12.5px] text-blue-700 hover:underline">
+                          <li key={a.slug} className="truncate">
+                            <Link
+                              href={`/wiki/${a.slug}`}
+                              className="text-[12.5px] text-blue-700 hover:underline"
+                              title={a.title}
+                            >
                               {a.title}
                             </Link>
                           </li>

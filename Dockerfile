@@ -20,7 +20,8 @@ RUN npm run build
 
 # --- Production ---
 FROM base AS runner
-RUN apk add --no-cache python3
+RUN apk add --no-cache python3 py3-pip && \
+    pip install --no-cache-dir --break-system-packages pdfplumber
 WORKDIR /app
 
 ENV NODE_ENV=production

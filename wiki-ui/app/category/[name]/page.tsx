@@ -54,7 +54,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             href={`/wiki/${a.slug}`}
             className={`block rounded-lg border ${style.border} bg-white hover:shadow-md transition-all hover:border-opacity-80 p-3 no-underline group`}
           >
-            <p className={`text-[13px] font-semibold group-hover:text-blue-700 text-gray-800 leading-snug mb-1`}>
+            <p
+              className="text-[13px] font-semibold group-hover:text-blue-700 text-gray-800 leading-snug mb-1 line-clamp-3 break-words"
+              title={a.title}
+            >
               {a.title}
             </p>
             <p className="text-[11px] text-gray-400">

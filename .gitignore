@@ -27,3 +27,12 @@ wiki/*
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Runtime data (personal / sensitive — never commit)
+users.json
+wiki-config.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

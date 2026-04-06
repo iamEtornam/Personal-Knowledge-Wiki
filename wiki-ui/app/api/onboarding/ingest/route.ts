@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { getWikiConfig } from "@/lib/config";
 import { execFile } from "child_process";
-import { promisify } from "util";
-import path from "path";
 import { existsSync } from "fs";
+import { NextResponse } from "next/server";
+import path from "path";
+import { promisify } from "util";
 
 // execFile is safer than exec — arguments are passed as an array, not a shell
 // string, so there is no risk of command injection via the script path.
@@ -22,16 +23,29 @@ export async function POST() {
     });
   }
 
+  const config = getWikiConfig();
+  const args: string[] = [scriptPath];
+
+  if (config.llmEnabled) {
+    args.push("--llm");
+    if (config.llmModel) args.push("--model", config.llmModel);
+    if (config.llmOllamaUrl) args.push("--ollama-url", config.llmOllamaUrl);
+  }
+
+  // Allow more time when the LLM is cleaning each file.
+  const timeout = config.llmEnabled ? 600_000 : 120_000;
+
   try {
-    const { stdout, stderr } = await execFileAsync("python3", [scriptPath], {
+    const { stdout, stderr } = await execFileAsync("python3", args, {
       cwd: rootDir,
-      timeout: 120_000,
+      timeout,
     });
 
     return NextResponse.json({
       success: true,
       output: stdout,
       warnings: stderr || undefined,
+      llmEnabled: config.llmEnabled,
     });
   } catch (error) {
     console.error("Ingest error:", error);

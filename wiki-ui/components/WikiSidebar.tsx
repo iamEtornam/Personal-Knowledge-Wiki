@@ -3,7 +3,8 @@
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { AlignLeft, BarChart2, GitBranch, Home, PlusCircle, Search } from "lucide-react";
+import { AlignLeft, BarChart2, GitBranch, Home, LogOut, PlusCircle, Search } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -102,8 +103,8 @@ export default function WikiSidebar({
                     key={d.name}
                     href={`/category/${d.name}`}
                     className={`flex items-center justify-between px-3 py-1.5 rounded-md mx-2 mb-0.5 no-underline transition-colors ${pathname === `/category/${d.name}`
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                       }`}
                   >
                     <span className="text-[12.5px] capitalize font-medium truncate">{d.name}</span>
@@ -119,10 +120,8 @@ export default function WikiSidebar({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 px-4 py-3">
-        <p className="text-[10px] text-gray-400 text-center leading-relaxed">
-          Maintained by your AI agent
-        </p>
+      <div className="border-t border-gray-200 px-3 py-3">
+        <UserFooter />
       </div>
     </aside>
   );
@@ -154,14 +153,41 @@ function NavLink({
     <Link
       href={href}
       className={`flex items-center gap-2 px-3 py-1.5 rounded-md mx-2 mb-0.5 no-underline text-[12.5px] font-medium transition-colors ${active
-          ? "bg-blue-600 text-white shadow-sm"
-          : highlight
-            ? "text-blue-600 hover:bg-blue-50 hover:text-blue-700 border border-blue-200 bg-blue-50/50"
-            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        ? "bg-blue-600 text-white shadow-sm"
+        : highlight
+          ? "text-blue-600 hover:bg-blue-50 hover:text-blue-700 border border-blue-200 bg-blue-50/50"
+          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
         }`}
     >
       {icon}
       {label}
     </Link>
+  );
+}
+
+function UserFooter() {
+  const { data: session } = useSession();
+  const username = session?.user?.name ?? "…";
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 min-w-0">
+        <div
+          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+          style={{ background: "linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)" }}
+        >
+          {username.charAt(0).toUpperCase()}
+        </div>
+        <span className="text-[12px] font-medium text-gray-700 truncate">{username}</span>
+      </div>
+      <button
+        onClick={() => signOut({ callbackUrl: "/login" })}
+        title="Sign out"
+        className="flex items-center justify-center w-6 h-6 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+        style={{ border: "none", background: "transparent", cursor: "pointer" }}
+      >
+        <LogOut className="w-3.5 h-3.5" />
+      </button>
+    </div>
   );
 }
