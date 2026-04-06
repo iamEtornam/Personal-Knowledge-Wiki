@@ -224,6 +224,7 @@ export default function OnboardingWizard() {
   const [phase, setPhase] = useState<ProcessingPhase>('idle');
   const [phaseMessage, setPhaseMessage] = useState('');
   const [uploadCount, setUploadCount] = useState(0);
+  const [ingestRan, setIngestRan] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function toggleSource(id: SourceId) {
@@ -286,13 +287,14 @@ export default function OnboardingWizard() {
         message?: string;
       };
 
-      if (!ingestData.success && ingestData.message) {
-        setPhaseMessage(ingestData.message);
-      }
-
+      setIngestRan(ingestData.success);
       setPhase('done');
-      setPhaseMessage('Done!');
-      setTimeout(() => setStep(4), 1200);
+      setPhaseMessage(
+        ingestData.success
+          ? 'Ingest complete!'
+          : (ingestData.message ?? 'Files saved — ask your agent to ingest them.'),
+      );
+      setTimeout(() => setStep(4), 1500);
     } catch (err) {
       setPhase('error');
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -394,6 +396,7 @@ export default function OnboardingWizard() {
             <CompleteStep
               uploadCount={uploadCount}
               sourceCount={selected.size}
+              ingestRan={ingestRan}
               onOpenWiki={() => router.push('/')}
             />
           )}
@@ -975,51 +978,64 @@ function ProcessingStep({
 function CompleteStep({
   uploadCount,
   sourceCount,
+  ingestRan,
   onOpenWiki,
 }: {
   uploadCount: number;
   sourceCount: number;
+  ingestRan: boolean;
   onOpenWiki: () => void;
 }) {
   return (
     <div className="max-w-lg mx-auto text-center py-8">
-      <div className="text-6xl mb-6">🎉</div>
+      <div className="text-6xl mb-6">{ingestRan ? '🎉' : '📁'}</div>
       <h2 className="text-2xl font-serif font-normal text-gray-900 mb-3">
-        Your data is ready!
+        {ingestRan ? 'Files ingested!' : 'Files uploaded!'}
       </h2>
-      <p className="text-sm text-gray-500 leading-relaxed mb-8 max-w-sm mx-auto">
+      <p className="text-sm text-gray-500 leading-relaxed mb-6 max-w-sm mx-auto">
         {uploadCount > 0
-          ? `${uploadCount} file${uploadCount !== 1 ? 's' : ''} from ${sourceCount} source${sourceCount !== 1 ? 's' : ''} uploaded.`
-          : `${sourceCount} source${sourceCount !== 1 ? 's' : ''} configured.`}{' '}
-        Now ask your AI agent to{' '}
-        <strong className="text-gray-700">absorb</strong> the entries and build
-        your wiki.
+          ? `${uploadCount} file${uploadCount !== 1 ? 's' : ''} from ${sourceCount} source${sourceCount !== 1 ? 's' : ''} saved to `
+          : `${sourceCount} source${sourceCount !== 1 ? 's' : ''} saved to `}
+        <code className="bg-gray-100 px-1 rounded text-gray-700 text-xs">data/</code>
+        {ingestRan
+          ? ' and converted into raw entries.'
+          : '. Now ask your agent to ingest and absorb them.'}
       </p>
 
-      {/* What to expect */}
+      {/* Status banner */}
+      {!ingestRan && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6 text-left">
+          <p className="text-[12.5px] text-amber-800">
+            <strong>Next:</strong> Your files are saved but not yet processed. Ask your AI
+            agent to <strong>ingest my data</strong> to convert them into wiki entries.
+          </p>
+        </div>
+      )}
+
+      {/* Step indicators */}
       <div className="grid grid-cols-3 gap-3 mb-8 text-left">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-[11px] font-bold text-blue-700 uppercase tracking-wide mb-1">
-            Step 1
+        <div className={`rounded-lg p-3 border ${uploadCount > 0 ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+          <p className={`text-[11px] font-bold uppercase tracking-wide mb-1 ${uploadCount > 0 ? 'text-green-700' : 'text-gray-400'}`}>
+            {uploadCount > 0 ? '✓ Done' : 'Step 1'}
           </p>
-          <p className="text-[12.5px] text-blue-900">
-            Agent ingests raw files into individual entries
-          </p>
-        </div>
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <p className="text-[11px] font-bold text-purple-700 uppercase tracking-wide mb-1">
-            Step 2
-          </p>
-          <p className="text-[12.5px] text-purple-900">
-            Agent absorbs entries into linked wiki articles
+          <p className={`text-[12.5px] ${uploadCount > 0 ? 'text-green-900' : 'text-gray-400'}`}>
+            Upload files to data/
           </p>
         </div>
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <p className="text-[11px] font-bold text-green-700 uppercase tracking-wide mb-1">
-            Step 3
+        <div className={`rounded-lg p-3 border ${ingestRan ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+          <p className={`text-[11px] font-bold uppercase tracking-wide mb-1 ${ingestRan ? 'text-green-700' : 'text-amber-700'}`}>
+            {ingestRan ? '✓ Done' : '→ Next'}
           </p>
-          <p className="text-[12.5px] text-green-900">
-            Query anything about your life instantly
+          <p className={`text-[12.5px] ${ingestRan ? 'text-green-900' : 'text-amber-900'}`}>
+            Ingest into raw entries
+          </p>
+        </div>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1">
+            {ingestRan ? '→ Next' : 'Step 3'}
+          </p>
+          <p className="text-[12.5px] text-gray-400">
+            Absorb into wiki articles
           </p>
         </div>
       </div>
@@ -1027,7 +1043,7 @@ function CompleteStep({
       {/* Agent commands */}
       <div className="bg-gray-950 text-gray-100 rounded-xl p-5 text-left font-mono text-sm leading-8 mb-8">
         <p className="text-gray-500 text-xs mb-2"># Tell your agent:</p>
-        <p>Ingest my data</p>
+        {!ingestRan && <p className="text-yellow-300">Ingest my data</p>}
         <p>Absorb all entries</p>
         <p>What are my biggest themes?</p>
       </div>
