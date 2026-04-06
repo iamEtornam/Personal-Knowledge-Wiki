@@ -2,7 +2,7 @@ import { getAllArticles } from "@/lib/wiki";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
-export const metadata = { title: "All Articles — Personal Wiki" };
+export const metadata = { title: "All Articles | Personal Wiki" };
 
 export default function AllArticlesPage() {
   const articles = getAllArticles();

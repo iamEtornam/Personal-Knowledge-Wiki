@@ -4,42 +4,24 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import Link from "next/link";
+import GithubSlugger from "github-slugger";
+import type { Element as HastElement } from "hast";
 import { Components } from "react-markdown";
+import { hastHeadingPlainText } from "@/lib/heading-slug";
+import { preprocessWikiContent } from "@/lib/preprocess-wiki-content";
 
 interface ArticleContentProps {
   content: string;
   allSlugs: string[];
 }
 
-function resolveWikilink(text: string, allSlugs: string[]): string {
-  const slug = text
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
-  const found = allSlugs.find((s) => {
-    const base = s.split("/").pop() || "";
-    return (
-      base.toLowerCase() === slug ||
-      base.toLowerCase().replace(/-/g, " ") === text.toLowerCase()
-    );
-  });
-  return found ? `/wiki/${found}` : "";
-}
-
 export default function ArticleContent({
   content,
   allSlugs,
 }: ArticleContentProps) {
-  const processedContent = content.replace(
-    /\[\[([^\]]+)\]\]/g,
-    (match, title) => {
-      const href = resolveWikilink(title, allSlugs);
-      if (href) {
-        return `[${title}](${href})`;
-      }
-      return `[${title}](#missing "Article does not exist yet")`;
-    }
-  );
+  const slugger = new GithubSlugger();
+
+  const processedContent = preprocessWikiContent(content, allSlugs);
 
   const components: Components = {
     a({ href, children, title, ...props }) {
@@ -81,6 +63,22 @@ export default function ArticleContent({
           {children}
           <sup style={{ fontSize: "0.7em", marginLeft: 1 }}>↗</sup>
         </a>
+      );
+    },
+    h2({ node, children, ...props }) {
+      const id = slugger.slug(hastHeadingPlainText(node as HastElement | undefined));
+      return (
+        <h2 {...props} id={id}>
+          {children}
+        </h2>
+      );
+    },
+    h3({ node, children, ...props }) {
+      const id = slugger.slug(hastHeadingPlainText(node as HastElement | undefined));
+      return (
+        <h3 {...props} id={id}>
+          {children}
+        </h3>
       );
     },
     img({ src, alt }) {

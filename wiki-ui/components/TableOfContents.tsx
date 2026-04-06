@@ -1,27 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { List } from "lucide-react";
-
-interface Heading { id: string; text: string; level: number }
-
-function extractHeadings(content: string): Heading[] {
-  const results: Heading[] = [];
-  const re = /^(#{2,3})\s+(.+)$/gm;
-  let m;
-  while ((m = re.exec(content)) !== null) {
-    const level = m[1].length;
-    const text  = m[2].replace(/\*\*/g, "").trim();
-    const id    = text.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    results.push({ id, text, level });
-  }
-  return results;
-}
+import { extractTocHeadings } from "@/lib/heading-slug";
 
 export default function TableOfContents({ content }: { content: string }) {
   const [activeId, setActiveId] = useState("");
   const [collapsed, setCollapsed] = useState(false);
-  const headings = extractHeadings(content);
+  const headings = useMemo(() => extractTocHeadings(content), [content]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -51,7 +37,7 @@ export default function TableOfContents({ content }: { content: string }) {
 
       {!collapsed && (
         <ol className="px-3 pb-3 space-y-0.5 border-t border-blue-200">
-          {headings.map((h, i) => (
+          {headings.map((h) => (
             <li
               key={h.id}
               className={`${h.level === 3 ? "ml-4" : ""}`}

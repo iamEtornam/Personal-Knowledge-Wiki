@@ -2,9 +2,9 @@ import { getAllArticles, getArticleBySlug, getBacklinks, type WikiArticle } from
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import ArticleContent from "@/components/ArticleContent";
 import TableOfContents from "@/components/TableOfContents";
+import { preprocessWikiContent } from "@/lib/preprocess-wiki-content";
 import { ChevronRight, Link2, FileText, Calendar, Clock } from "lucide-react";
 
 interface ArticlePageProps {
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: ArticlePageProps) {
   const { slug } = await params;
   const article  = getArticleBySlug(slug.join("/"));
   if (!article) return { title: "Not Found" };
-  return { title: `${article.title} — Personal Wiki` };
+  return { title: `${article.title} | Personal Wiki` };
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
@@ -46,6 +46,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const allSlugs    = allArticles.map(a => a.slug);
   const backlinks   = getBacklinks();
   const inbound: string[] = backlinks[article.title] || [];
+
+  const tocSource = preprocessWikiContent(article.content, allSlugs);
 
   const related = article.related
     .map(r => {
@@ -127,7 +129,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </div>
           )}
 
-          <TableOfContents content={article.content} />
+          <TableOfContents content={tocSource} />
           <ArticleContent content={article.content} allSlugs={allSlugs} />
 
           {/* Backlinks */}

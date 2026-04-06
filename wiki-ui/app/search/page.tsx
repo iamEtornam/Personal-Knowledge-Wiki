@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, type ReactNode } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,38 @@ import { Search } from "lucide-react";
 
 interface SearchResult {
   slug: string; title: string; directory: string; wordCount: number; excerpt: string;
+}
+
+function SearchExcerpt({ text, query }: { text: string; query: string }) {
+  const q = query.trim();
+  if (!q) {
+    return (
+      <p className="text-sm text-gray-600 leading-relaxed">{text}</p>
+    );
+  }
+
+  const lower = text.toLowerCase();
+  const needle = q.toLowerCase();
+  const parts: ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+
+  while (i < text.length) {
+    const j = lower.indexOf(needle, i);
+    if (j === -1) {
+      parts.push(<span key={key++}>{text.slice(i)}</span>);
+      break;
+    }
+    if (j > i) {
+      parts.push(<span key={key++}>{text.slice(i, j)}</span>);
+    }
+    parts.push(<mark key={key++}>{text.slice(j, j + q.length)}</mark>);
+    i = j + q.length;
+  }
+
+  return (
+    <p className="text-sm text-gray-600 leading-relaxed">{parts}</p>
+  );
 }
 
 function SearchContent() {
@@ -75,7 +107,7 @@ function SearchContent() {
               : `${results.length} result${results.length !== 1 ? "s" : ""} for "${initialQ}"`}
           </p>
 
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 wiki-search-results">
             {results.map(r => (
               <div key={r.slug} className="py-4">
                 <Link
@@ -93,10 +125,7 @@ function SearchContent() {
                   <span>{r.wordCount.toLocaleString()} words</span>
                 </div>
                 {r.excerpt && (
-                  <p
-                    className="text-sm text-gray-600 leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: r.excerpt }}
-                  />
+                  <SearchExcerpt text={r.excerpt} query={initialQ} />
                 )}
               </div>
             ))}
@@ -111,7 +140,6 @@ function SearchContent() {
         </div>
       )}
 
-      <style>{`mark { background: #fef08a; border-radius: 2px; padding: 0 2px; }`}</style>
     </div>
   );
 }

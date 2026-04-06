@@ -1,23 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllArticles } from "@/lib/wiki";
 
-function highlight(text: string, query: string): string {
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const regex = new RegExp(`(${escaped})`, "gi");
-  return text.replace(regex, "<mark>$1</mark>");
-}
-
+/** Plain text only; highlighting is done in the client to avoid HTML injection. */
 function excerpt(content: string, query: string, length = 200): string {
   const idx = content.toLowerCase().indexOf(query.toLowerCase());
   if (idx === -1) {
     const plain = content.replace(/[#*`\[\]]/g, "").trim();
-    return highlight(plain.slice(0, length) + (plain.length > length ? "..." : ""), query);
+    const slice = plain.slice(0, length) + (plain.length > length ? "..." : "");
+    return slice;
   }
 
   const start = Math.max(0, idx - 80);
   const end = Math.min(content.length, idx + length - 80);
   const snippet = content.slice(start, end).replace(/[#*`\[\]]/g, "").trim();
-  return (start > 0 ? "..." : "") + highlight(snippet, query) + (end < content.length ? "..." : "");
+  return (start > 0 ? "..." : "") + snippet + (end < content.length ? "..." : "");
 }
 
 export function GET(req: NextRequest) {

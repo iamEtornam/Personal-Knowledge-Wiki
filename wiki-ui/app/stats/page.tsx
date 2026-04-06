@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { BarChart2, Link2, FileText, Tag, AlertCircle, TrendingUp } from "lucide-react";
 
-export const metadata = { title: "Stats — Personal Wiki" };
+export const metadata = { title: "Stats | Personal Wiki" };
 
 export default function StatsPage() {
   const articles   = getAllArticles();

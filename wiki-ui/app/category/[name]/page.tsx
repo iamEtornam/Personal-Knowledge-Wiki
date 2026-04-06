@@ -1,27 +1,12 @@
 import { getAllArticles } from "@/lib/wiki";
+import { getCategoryTheme } from "@/lib/category-theme";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
 import { ChevronRight } from "lucide-react";
 
 interface CategoryPageProps {
   params: Promise<{ name: string }>;
 }
-
-const HEADER_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  people:       { bg: "bg-blue-50",   border: "border-blue-200",  text: "text-blue-800" },
-  projects:     { bg: "bg-orange-50", border: "border-orange-200",text: "text-orange-800" },
-  philosophies: { bg: "bg-purple-50", border: "border-purple-200",text: "text-purple-800" },
-  patterns:     { bg: "bg-green-50",  border: "border-green-200", text: "text-green-800" },
-  places:       { bg: "bg-rose-50",   border: "border-rose-200",  text: "text-rose-800" },
-  films:        { bg: "bg-pink-50",   border: "border-pink-200",  text: "text-pink-800" },
-  books:        { bg: "bg-amber-50",  border: "border-amber-200", text: "text-amber-800" },
-  music:        { bg: "bg-teal-50",   border: "border-teal-200",  text: "text-teal-800" },
-  eras:         { bg: "bg-slate-50",  border: "border-slate-200", text: "text-slate-800" },
-  decisions:    { bg: "bg-yellow-50", border: "border-yellow-200",text: "text-yellow-800" },
-  ideas:        { bg: "bg-cyan-50",   border: "border-cyan-200",  text: "text-cyan-800" },
-  tools:        { bg: "bg-indigo-50", border: "border-indigo-200",text: "text-indigo-800" },
-};
 
 export async function generateStaticParams() {
   const articles = getAllArticles();
@@ -40,7 +25,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const articles   = allArticles.filter(a => a.directory === name);
   if (articles.length === 0) notFound();
 
-  const style = HEADER_COLORS[name] ?? { bg: "bg-gray-50", border: "border-gray-200", text: "text-gray-800" };
+  const t = getCategoryTheme(name);
+  const style = { bg: t.categoryBg, border: t.categoryBorder, text: t.categoryText };
   const sorted = [...articles].sort((a, b) => a.title.localeCompare(b.title));
 
   return (

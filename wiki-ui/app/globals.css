@@ -132,6 +132,13 @@ body {
 .wiki-content img { max-width: 100%; height: auto; }
 .wiki-content hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.5em 0; }
 
+/* Search results: highlight query matches (styled via CSS, not inline tags) */
+.wiki-search-results mark {
+  background: #fef08a;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
 /* ── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
