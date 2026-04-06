@@ -1,29 +1,30 @@
-import { getAllArticles, getArticleBySlug, getBacklinks, type WikiArticle } from "@/lib/wiki";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import ArticleContent from "@/components/ArticleContent";
 import TableOfContents from "@/components/TableOfContents";
+import { Badge } from "@/components/ui/badge";
+import { getSiteName } from "@/lib/config";
 import { preprocessWikiContent } from "@/lib/preprocess-wiki-content";
-import { ChevronRight, Link2, FileText, Calendar, Clock } from "lucide-react";
+import { getAllArticles, getArticleBySlug, getBacklinks, type WikiArticle } from "@/lib/wiki";
+import { Calendar, ChevronRight, Clock, FileText, Link2 } from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 interface ArticlePageProps {
   params: Promise<{ slug: string[] }>;
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  person:       "bg-blue-100 text-blue-700 border-blue-200",
-  project:      "bg-orange-100 text-orange-700 border-orange-200",
-  philosophy:   "bg-purple-100 text-purple-700 border-purple-200",
-  pattern:      "bg-green-100 text-green-700 border-green-200",
-  place:        "bg-rose-100 text-rose-700 border-rose-200",
-  film:         "bg-pink-100 text-pink-700 border-pink-200",
-  book:         "bg-amber-100 text-amber-700 border-amber-200",
-  era:          "bg-slate-100 text-slate-700 border-slate-200",
-  decision:     "bg-yellow-100 text-yellow-700 border-yellow-200",
-  idea:         "bg-cyan-100 text-cyan-700 border-cyan-200",
-  tool:         "bg-indigo-100 text-indigo-700 border-indigo-200",
-  transition:   "bg-teal-100 text-teal-700 border-teal-200",
+  person: "bg-blue-100 text-blue-700 border-blue-200",
+  project: "bg-orange-100 text-orange-700 border-orange-200",
+  philosophy: "bg-purple-100 text-purple-700 border-purple-200",
+  pattern: "bg-green-100 text-green-700 border-green-200",
+  place: "bg-rose-100 text-rose-700 border-rose-200",
+  film: "bg-pink-100 text-pink-700 border-pink-200",
+  book: "bg-amber-100 text-amber-700 border-amber-200",
+  era: "bg-slate-100 text-slate-700 border-slate-200",
+  decision: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  idea: "bg-cyan-100 text-cyan-700 border-cyan-200",
+  tool: "bg-indigo-100 text-indigo-700 border-indigo-200",
+  transition: "bg-teal-100 text-teal-700 border-teal-200",
 };
 
 export async function generateStaticParams() {
@@ -32,19 +33,19 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const article  = getArticleBySlug(slug.join("/"));
+  const article = getArticleBySlug(slug.join("/"));
   if (!article) return { title: "Not Found" };
-  return { title: `${article.title} | Personal Wiki` };
+  return { title: `${article.title} | ${getSiteName()}` };
 }
 
 export default async function ArticlePage({ params }: ArticlePageProps) {
-  const { slug }    = await params;
-  const article     = getArticleBySlug(slug.join("/"));
+  const { slug } = await params;
+  const article = getArticleBySlug(slug.join("/"));
   if (!article) notFound();
 
   const allArticles = getAllArticles();
-  const allSlugs    = allArticles.map(a => a.slug);
-  const backlinks   = getBacklinks();
+  const allSlugs = allArticles.map(a => a.slug);
+  const backlinks = getBacklinks();
   const inbound: string[] = backlinks[article.title] || [];
 
   const tocSource = preprocessWikiContent(article.content, allSlugs);

@@ -1,8 +1,11 @@
+import { Badge } from "@/components/ui/badge";
+import { getSiteName } from "@/lib/config";
 import { getAllArticles } from "@/lib/wiki";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 
-export const metadata = { title: "All Articles | Personal Wiki" };
+export function generateMetadata() {
+  return { title: `All Articles | ${getSiteName()}` };
+}
 
 export default function AllArticlesPage() {
   const articles = getAllArticles();

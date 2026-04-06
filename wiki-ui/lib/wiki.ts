@@ -1,6 +1,19 @@
 import fs from "fs";
-import path from "path";
 import matter from "gray-matter";
+import yaml from "js-yaml";
+import path from "path";
+
+// Use CORE_SCHEMA so js-yaml never converts bare YAML dates (e.g. 2026-04-06)
+// into JavaScript Date objects. All date-like values stay as strings.
+const MATTER_OPTS: matter.GrayMatterOption<string, object> = {
+  engines: {
+    yaml: {
+      parse: (s: string) =>
+        yaml.load(s, { schema: yaml.CORE_SCHEMA }) as Record<string, unknown>,
+      stringify: (data: object) => yaml.dump(data),
+    },
+  },
+};
 
 const WIKI_DIR = path.join(process.cwd(), "..", "wiki");
 
@@ -60,10 +73,16 @@ function walkDir(dir: string, articles: WikiArticle[]) {
   }
 }
 
+function toDateString(val: unknown): string {
+  if (!val) return "";
+  if (val instanceof Date) return val.toISOString().split("T")[0];
+  return String(val);
+}
+
 function parseArticle(filePath: string): WikiArticle | null {
   try {
     const raw = fs.readFileSync(filePath, "utf-8");
-    const { data, content } = matter(raw);
+    const { data, content } = matter(raw, MATTER_OPTS);
     const relativePath = path.relative(WIKI_DIR, filePath);
     const parts = relativePath.split(path.sep);
     const directory = parts.length > 1 ? parts[0] : "";
@@ -81,8 +100,8 @@ function parseArticle(filePath: string): WikiArticle | null {
       filePath,
       title,
       type: data.type || "article",
-      created: data.created || "",
-      last_updated: data.last_updated || "",
+      created: toDateString(data.created),
+      last_updated: toDateString(data.last_updated),
       related: data.related || [],
       sources: data.sources || [],
       content,
@@ -123,7 +142,7 @@ export function getWikiIndex(): WikiIndex {
     return { articles: [], totalArticles: 0, lastRebuilt: null };
   }
   const raw = fs.readFileSync(indexPath, "utf-8");
-  const { data, content } = matter(raw);
+  const { data, content } = matter(raw, MATTER_OPTS);
 
   const totalMatch = content.match(/Total articles: (\d+)/);
   const total = totalMatch ? parseInt(totalMatch[1], 10) : 0;

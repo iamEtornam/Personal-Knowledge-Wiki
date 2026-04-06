@@ -1,7 +1,10 @@
+import { getSiteName } from "@/lib/config";
 import { getAllArticles, getBacklinks } from "@/lib/wiki";
 import GraphView from "./GraphView";
 
-export const metadata = { title: "Graph View | Personal Wiki" };
+export function generateMetadata() {
+  return { title: `Graph View | ${getSiteName()}` };
+}
 
 export default function GraphPage() {
   const articles = getAllArticles();
@@ -41,7 +44,7 @@ export default function GraphPage() {
       >
         <h1
           style={{
-            fontFamily: "Georgia, serif",
+            fontFamily: "'Playfair Display', Georgia, serif",
             fontWeight: "normal",
             fontSize: 20,
             margin: 0,

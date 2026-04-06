@@ -1,30 +1,30 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import {
-  useState,
-  useCallback,
-  useRef,
-  type DragEvent,
-  type ChangeEvent,
-} from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Check,
-  Upload,
-  ArrowRight,
+  AlertCircle,
   ArrowLeft,
-  Sparkles,
+  ArrowRight,
   BookOpen,
-  Network,
-  Search,
-  X,
+  Check,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
+  Network,
+  Search,
+  Sparkles,
+  Upload,
+  X,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
+import {
+  useCallback,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+} from 'react';
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -218,6 +218,7 @@ const STEPS = ['Welcome', 'Sources', 'Upload', 'Processing', 'Done'];
 export default function OnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState<WizardStep>(0);
+  const [ownerName, setOwnerName] = useState('');
   const [selected, setSelected] = useState<Set<SourceId>>(new Set());
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [expandedSource, setExpandedSource] = useState<SourceId | null>(null);
@@ -226,6 +227,14 @@ export default function OnboardingWizard() {
   const [uploadCount, setUploadCount] = useState(0);
   const [ingestRan, setIngestRan] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function saveOwnerName() {
+    await fetch('/api/onboarding/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ownerName: ownerName.trim() }),
+    });
+  }
 
   function toggleSource(id: SourceId) {
     setSelected(prev => {
@@ -313,9 +322,11 @@ export default function OnboardingWizard() {
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold font-serif shadow-sm"
                 style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)' }}
               >
-                W
+                {ownerName.trim() ? ownerName.trim().charAt(0).toUpperCase() : 'W'}
               </div>
-              <span className="text-sm font-semibold text-gray-700">Personal Wiki Setup</span>
+              <span className="text-sm font-semibold text-gray-700">
+                {ownerName.trim() ? `${ownerName.trim()}pedia` : 'Personal Wiki'} Setup
+              </span>
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -328,8 +339,8 @@ export default function OnboardingWizard() {
                       i < step
                         ? 'bg-green-500 text-white'
                         : i === step
-                        ? 'bg-blue-600 text-white shadow-md scale-110'
-                        : 'bg-gray-100 text-gray-400',
+                          ? 'bg-blue-600 text-white shadow-md scale-110'
+                          : 'bg-gray-100 text-gray-400',
                     )}
                   >
                     {i < step ? <Check className="w-3 h-3" /> : i + 1}
@@ -350,7 +361,16 @@ export default function OnboardingWizard() {
 
         {/* ── Content ── */}
         <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
-          {step === 0 && <WelcomeStep onNext={() => setStep(1)} />}
+          {step === 0 && (
+            <WelcomeStep
+              ownerName={ownerName}
+              onNameChange={setOwnerName}
+              onNext={async () => {
+                await saveOwnerName();
+                setStep(1);
+              }}
+            />
+          )}
 
           {step === 1 && (
             <SourcesStep
@@ -408,7 +428,24 @@ export default function OnboardingWizard() {
 
 // ── Step: Welcome ──────────────────────────────────────────────
 
-function WelcomeStep({ onNext }: { onNext: () => void }) {
+function WelcomeStep({
+  ownerName,
+  onNameChange,
+  onNext,
+}: {
+  ownerName: string;
+  onNameChange: (name: string) => void;
+  onNext: () => void;
+}) {
+  const siteName = ownerName.trim() ? `${ownerName.trim()}pedia` : '';
+  const [saving, setSaving] = useState(false);
+
+  async function handleContinue() {
+    setSaving(true);
+    await onNext();
+    setSaving(false);
+  }
+
   return (
     <div className="text-center max-w-2xl mx-auto">
       <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-8 py-12 mb-8 shadow-sm">
@@ -416,10 +453,37 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
         <h1 className="text-3xl font-serif font-normal text-gray-900 mb-3">
           Build your Personal Wikipedia
         </h1>
-        <p className="text-gray-500 text-[15px] leading-relaxed max-w-md mx-auto">
+        <p className="text-gray-500 text-[15px] leading-relaxed max-w-md mx-auto mb-8">
           Connect your data — journals, messages, social media, notes — and your AI
           agent will compile everything into a fully interlinked wiki about your life.
         </p>
+
+        <div className="max-w-sm mx-auto">
+          <label
+            htmlFor="owner-name"
+            className="block text-sm font-semibold text-gray-700 mb-2 text-left"
+          >
+            What&apos;s your name?
+          </label>
+          <input
+            id="owner-name"
+            type="text"
+            value={ownerName}
+            onChange={e => onNameChange(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && ownerName.trim()) handleContinue();
+            }}
+            placeholder="e.g. Etornam"
+            autoFocus
+            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 text-base text-gray-900 placeholder:text-gray-300 transition-all"
+          />
+          {siteName && (
+            <p className="mt-3 text-sm text-gray-500">
+              Your wiki will be called{' '}
+              <span className="font-bold text-blue-700">{siteName}</span>
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
@@ -444,11 +508,22 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
       </div>
 
       <button
-        onClick={onNext}
-        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl text-sm font-semibold transition-colors shadow-md"
+        onClick={handleContinue}
+        disabled={!ownerName.trim() || saving}
+        className={cn(
+          'inline-flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold transition-all shadow-md',
+          ownerName.trim()
+            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+            : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none',
+        )}
       >
-        Get Started <ArrowRight className="w-4 h-4" />
+        {saving ? 'Saving…' : 'Get Started'} <ArrowRight className="w-4 h-4" />
       </button>
+      {!ownerName.trim() && (
+        <p className="text-xs text-amber-600 mt-3">
+          Enter your name to continue
+        </p>
+      )}
       <p className="text-xs text-gray-400 mt-4">
         Based on Andrej Karpathy&apos;s personal wiki concept
       </p>
@@ -911,8 +986,8 @@ function ProcessingStep({
                     isDone
                       ? 'bg-green-50 border-green-200'
                       : isActive
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-gray-50 border-gray-200',
+                        ? 'bg-blue-50 border-blue-200'
+                        : 'bg-gray-50 border-gray-200',
                   )}
                 >
                   <div
@@ -921,8 +996,8 @@ function ProcessingStep({
                       isDone
                         ? 'bg-green-500'
                         : isActive
-                        ? 'bg-blue-500'
-                        : 'bg-gray-200',
+                          ? 'bg-blue-500'
+                          : 'bg-gray-200',
                     )}
                   >
                     {isDone ? (
@@ -941,8 +1016,8 @@ function ProcessingStep({
                       isDone
                         ? 'text-green-800'
                         : isActive
-                        ? 'text-blue-800'
-                        : 'text-gray-400',
+                          ? 'text-blue-800'
+                          : 'text-gray-400',
                     )}
                   >
                     {s.label}
