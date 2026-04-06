@@ -1,5 +1,3 @@
-import { auth } from "@/auth";
-import { Providers } from "@/components/providers";
 import WikiSidebar from "@/components/WikiSidebar";
 import { getOwnerInitial, getSiteName } from "@/lib/config";
 import { cn } from "@/lib/utils";
@@ -36,48 +34,36 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  const fontClasses = cn(
-    "font-sans antialiased",
-    openSans.variable,
-    playfairDisplay.variable,
-    raleway.variable,
-  );
-
-  if (!session) {
-    return (
-      <html lang="en" className={fontClasses}>
-        <body>
-          <Providers>{children}</Providers>
-        </body>
-      </html>
-    );
-  }
-
   const directories = getDirectories();
   const allArticles = getAllArticles();
   const siteName = getSiteName();
   const initial = getOwnerInitial();
 
   return (
-    <html lang="en" className={fontClasses}>
+    <html
+      lang="en"
+      className={cn(
+        "font-sans antialiased",
+        openSans.variable,
+        playfairDisplay.variable,
+        raleway.variable,
+      )}
+    >
       <body>
-        <Providers>
-          <div style={{ display: "flex", minHeight: "100vh" }}>
-            <WikiSidebar
-              directories={directories}
-              totalArticles={allArticles.length}
-              siteName={siteName}
-              siteInitial={initial}
-            />
-            <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
-          </div>
-        </Providers>
+        <div style={{ display: "flex", minHeight: "100vh" }}>
+          <WikiSidebar
+            directories={directories}
+            totalArticles={allArticles.length}
+            siteName={siteName}
+            siteInitial={initial}
+          />
+          <main style={{ flex: 1, minWidth: 0 }}>{children}</main>
+        </div>
       </body>
     </html>
   );

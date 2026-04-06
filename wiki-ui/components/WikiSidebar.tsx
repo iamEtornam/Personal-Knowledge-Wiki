@@ -3,8 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { AlignLeft, BarChart2, GitBranch, Home, LogOut, PlusCircle, Search } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { AlignLeft, BarChart2, GitBranch, Home, PlusCircle, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -120,8 +119,10 @@ export default function WikiSidebar({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 px-3 py-3">
-        <UserFooter />
+      <div className="border-t border-gray-200 px-4 py-3">
+        <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+          Maintained by your AI agent
+        </p>
       </div>
     </aside>
   );
@@ -162,32 +163,5 @@ function NavLink({
       {icon}
       {label}
     </Link>
-  );
-}
-
-function UserFooter() {
-  const { data: session } = useSession();
-  const username = session?.user?.name ?? "…";
-
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2 min-w-0">
-        <div
-          className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-          style={{ background: "linear-gradient(135deg, #1d4ed8 0%, #7c3aed 100%)" }}
-        >
-          {username.charAt(0).toUpperCase()}
-        </div>
-        <span className="text-[12px] font-medium text-gray-700 truncate">{username}</span>
-      </div>
-      <button
-        onClick={() => signOut({ callbackUrl: "/login" })}
-        title="Sign out"
-        className="flex items-center justify-center w-6 h-6 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
-        style={{ border: "none", background: "transparent", cursor: "pointer" }}
-      >
-        <LogOut className="w-3.5 h-3.5" />
-      </button>
-    </div>
   );
 }
