@@ -255,22 +255,26 @@ export default function OnboardingWizard() {
     setError(null);
 
     try {
-      for (const source of DATA_SOURCES.filter(s => selected.has(s.id))) {
-        const sourceFiles = uploadedFiles.filter(f => f.sourceId === source.id);
-        if (sourceFiles.length === 0) continue;
+      // Upload all sources in parallel rather than sequentially
+      const sourcesToUpload = DATA_SOURCES.filter(
+        s => selected.has(s.id) && uploadedFiles.some(f => f.sourceId === s.id),
+      );
 
-        const formData = new FormData();
-        formData.append('sourceType', source.id);
-        for (const uf of sourceFiles) {
-          formData.append('files', uf.file, uf.file.name);
-        }
-
-        const res = await fetch('/api/onboarding/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        if (!res.ok) throw new Error(`Upload failed for ${source.name}`);
-      }
+      await Promise.all(
+        sourcesToUpload.map(async source => {
+          const sourceFiles = uploadedFiles.filter(f => f.sourceId === source.id);
+          const formData = new FormData();
+          formData.append('sourceType', source.id);
+          for (const uf of sourceFiles) {
+            formData.append('files', uf.file, uf.file.name);
+          }
+          const res = await fetch('/api/onboarding/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!res.ok) throw new Error(`Upload failed for ${source.name}`);
+        }),
+      );
 
       setUploadCount(uploadedFiles.length);
       setPhase('ingesting');

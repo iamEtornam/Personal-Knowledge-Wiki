@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import { existsSync } from "fs";
 
-const execAsync = promisify(exec);
+// execFile is safer than exec — arguments are passed as an array, not a shell
+// string, so there is no risk of command injection via the script path.
+const execFileAsync = promisify(execFile);
 
 export async function POST() {
   const rootDir = path.join(process.cwd(), "..");
@@ -21,7 +23,7 @@ export async function POST() {
   }
 
   try {
-    const { stdout, stderr } = await execAsync(`python3 "${scriptPath}"`, {
+    const { stdout, stderr } = await execFileAsync("python3", [scriptPath], {
       cwd: rootDir,
       timeout: 120_000,
     });
